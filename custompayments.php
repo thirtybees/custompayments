@@ -96,6 +96,10 @@ class CustomPayments extends PaymentModule
      */
     private function installModuleTab($tabClass, $tabName, $tabParent)
     {
+        if (defined('TB_INSTALLATION_IN_PROGRESS')) {
+            return true;
+        }
+
         if (!($idTabParent = Tab::getIdFromClassName($tabParent))) {
             return false;
         }
