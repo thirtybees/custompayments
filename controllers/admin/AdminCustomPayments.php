@@ -42,11 +42,28 @@ class AdminCustomPaymentsController extends ModuleAdminController
      */
     public function __construct()
     {
+        // This controller supports nice Bootstrap interfaces
         $this->bootstrap = true;
+
+        // Set the table for this controller
         $this->table = 'custom_payment_method';
-        $this->className = '\CustomPaymentsModule\CustomPaymentMethod';
+
+        // Set the ObjectModel classname for this controller
+        $this->className = 'CustomPaymentsModule\\CustomPaymentMethod';
+
+        // This controller has a multilang ObjectModel
         $this->lang = true;
 
+        // Retrieve the context from a static context, just because
+        $this->context = \Context::getContext();
+
+        // Only display this page in single store context
+        $this->multishop_context = Shop::CONTEXT_SHOP;
+
+        // Make sure that when we save the `CustomPaymentMethod` ObjectModel, the `_shop` table is set, too (primary => id_shop relation)
+        Shop::addTableAssociation('custom_payment_method', ['type' => 'shop']);
+
+        // Add two extra row actions to the list
         $this->addRowAction('edit');
         $this->addRowAction('delete');
 
@@ -54,26 +71,26 @@ class AdminCustomPaymentsController extends ModuleAdminController
 
         $this->fields_list = [
             'id_custom_payment_method' => ['title' => $this->l('ID'), 'align' => 'center', 'width' => 30],
-            'logo'                   => [
+            'logo'                     => [
                 'title'   => $this->l('Logo'),
                 'align'   => 'center',
                 'image'   => 'pay',
                 'orderby' => false,
                 'search'  => false,
             ],
-            'name'                   => [
+            'name'                     => [
                 'title' => $this->l('Name'),
                 'width' => 150,
                 'lang'  => true,
             ],
-            'description_short'      => [
+            'description_short'        => [
                 'title'     => $this->l('Short description'),
                 'width'     => 450,
                 'maxlength' => 90,
                 'orderby'   => false,
                 'lang'      => true,
             ],
-            'active'                 => [
+            'active'                   => [
                 'title'   => $this->l('Displayed'),
                 'active'  => 'status',
                 'align'   => 'center',
@@ -99,6 +116,11 @@ class AdminCustomPaymentsController extends ModuleAdminController
             return null;
         }
 
+        $id = (int) Tools::getValue(CustomPaymentMethod::$definition['primary']);
+
+        $imageUrl = ImageManager::thumbnail(CustomPaymentMethod::getImagePath($id), $this->table."_{$id}.jpg", 200, 'jpg', true, true);
+        $imageSize = file_exists(CustomPaymentMethod::getImagePath($id)) ? filesize(CustomPaymentMethod::getImagePath($id)) / 1000 : false;
+
         $this->fields_form = [
             'legend' => [
                 'title' => $this->l('Payment methods'),
@@ -107,7 +129,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
             'input'  => [
                 [
                     'type'     => 'text',
-                    'label'    => $this->l('Name:'),
+                    'label'    => $this->l('Name'),
                     'name'     => 'name',
                     'required' => true,
                     'lang'     => true,
@@ -116,7 +138,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
                 ],
                 [
                     'type'     => 'switch',
-                    'label'    => $this->l('Displayed:'),
+                    'label'    => $this->l('Displayed'),
                     'name'     => 'active',
                     'required' => false,
                     'class'    => 't',
@@ -136,7 +158,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
                 ],
                 [
                     'type'     => 'select',
-                    'label'    => $this->l('Cart type:'),
+                    'label'    => $this->l('Cart type'),
                     'name'     => 'cart_type',
                     'required' => false,
                     'options'  => [
@@ -150,18 +172,19 @@ class AdminCustomPaymentsController extends ModuleAdminController
                     ],
                 ],
                 [
-                    'type'  => 'textarea',
-                    'label' => $this->l('Short description:'),
-                    'name'  => 'description_short',
-                    'lang'  => true,
-                    'rows'  => 5,
-                    'cols'  => 40,
-                    'hint'  => $this->l('Invalid characters:').' <>;=#{}',
-                    'desc'  => $this->l('Displayed in payment selection page.'),
+                    'type'     => 'textarea',
+                    'label'    => $this->l('Short description'),
+                    'name'     => 'description_short',
+                    'required' => true,
+                    'lang'     => true,
+                    'rows'     => 5,
+                    'cols'     => 40,
+                    'hint'     => $this->l('Invalid characters:').' <>;=#{}',
+                    'desc'     => $this->l('Displayed in payment selection page.'),
                 ],
                 [
                     'type'         => 'textarea',
-                    'label'        => $this->l('Description:'),
+                    'label'        => $this->l('Description'),
                     'name'         => 'description',
                     'autoload_rte' => true,
                     'lang'         => true,
@@ -172,7 +195,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
                 ],
                 [
                     'type'         => 'textarea',
-                    'label'        => $this->l('Description success:'),
+                    'label'        => $this->l('Description success'),
                     'name'         => 'description_success',
                     'autoload_rte' => true,
                     'lang'         => true,
@@ -183,14 +206,17 @@ class AdminCustomPaymentsController extends ModuleAdminController
                 ],
                 [
                     'type'          => 'file',
-                    'label'         => $this->l('Image:'),
+                    'label'         => $this->l('Image'),
                     'name'          => 'logo',
                     'display_image' => true,
                     'desc'          => $this->l('Upload payment logo from your computer'),
+                    'image'         => $imageUrl ? $imageUrl : false,
+                    'size'          => $imageSize,
+                    'delete_url'    => static::$currentIndex.'&'.$this->identifier.'='.\Tools::getValue(CustomPaymentMethod::$definition['primary']).'&token='.$this->token.'&deleteImage=1',
                 ],
                 [
                     'type'    => 'select',
-                    'label'   => $this->l('Order state:'),
+                    'label'   => $this->l('Order state'),
                     'name'    => 'id_order_state',
                     'desc'    => $this->l('Order state after create.'),
                     'options' => [
@@ -201,7 +227,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
                 ],
                 [
                     'type'   => 'checkbox',
-                    'label'  => $this->l('Carriers:'),
+                    'label'  => $this->l('Carriers'),
                     'name'   => 'carrierBox',
                     'values' => [
                         'query' => Carrier::getCarriers(
@@ -278,6 +304,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
         }
 
         // Added values of object Group
+        /** @var CustomPaymentMethod $obj */
         $custompaymentsSystemCarrierIds = $obj->getCarriers();
 
         $carriers = Carrier::getCarriers($this->context->language->id, false, false, false, null, Carrier::PS_CARRIERS_AND_CARRIER_MODULES_NEED_RANGE);
@@ -312,25 +339,86 @@ class AdminCustomPaymentsController extends ModuleAdminController
      */
     public function postProcess()
     {
-        $return = parent::postProcess();
+        if (\Tools::isSubmit('deleteImage')) {
+            return $this->processForceDeleteImage();
+        } else {
+            $return = parent::postProcess();
 
-        if (Tools::getValue('submitAdd'.$this->table) && Validate::isLoadedObject($return)) {
-            $carriers = Carrier::getCarriers($this->context->language->iso_code, false, false, false, null, Carrier::PS_CARRIERS_AND_CARRIER_MODULES_NEED_RANGE);
-            $carrierBox = [];
-            foreach ($carriers as $carrier) {
-                if (Tools::getIsset('carrierBox_'.$carrier['id_carrier'])) {
-                    $carrierBox[] = $carrier['id_carrier'];
+            if (Tools::getValue('submitAdd'.$this->table) && Validate::isLoadedObject($return)) {
+                $carriers = Carrier::getCarriers($this->context->language->iso_code, false, false, false, null, Carrier::PS_CARRIERS_AND_CARRIER_MODULES_NEED_RANGE);
+                $carrierBox = [];
+                foreach ($carriers as $carrier) {
+                    if (Tools::getIsset('carrierBox_'.$carrier['id_carrier'])) {
+                        $carrierBox[] = $carrier['id_carrier'];
+                    }
+                }
+                $return->updateCarriers($carrierBox);
+                if (Group::isFeatureActive()) {
+                    $return->updateGroups(Tools::getValue('groupBox'));
+                }
+                if (Shop::isFeatureActive()) {
+                    $this->updateAssoShop($return->id);
                 }
             }
-            $return->updateCarriers($carrierBox);
-            if (Group::isFeatureActive()) {
-                $return->updateGroups(Tools::getValue('groupBox'));
-            }
-            if (Shop::isFeatureActive()) {
-                $this->updateAssoShop($return->id);
+
+            return $return;
+        }
+    }
+
+    /**
+     * @since 1.0.0
+     */
+    public function processForceDeleteImage()
+    {
+        $customPaymentMethod = $this->loadObject(true);
+
+        if (\Validate::isLoadedObject($customPaymentMethod)) {
+            $this->deleteImage($customPaymentMethod->id);
+        }
+    }
+
+    /**
+     * @param int $idBeesBlogCategory
+     *
+     * @return bool
+     *
+     * @since 1.0.0
+     */
+    public function deleteImage($idBeesBlogCategory)
+    {
+        $deleted = false;
+        // Delete base image
+        foreach (['png', 'jpg'] as $extension) {
+            if (file_exists(_PS_IMG_DIR_."pay/{$idBeesBlogCategory}.{$extension}")) {
+                unlink(_PS_IMG_DIR_."pay/{$idBeesBlogCategory}.{$extension}");
             }
         }
 
-        return $return;
+        if ($deleted) {
+            $this->confirmations[] = $this->l('Successfully deleted image');
+        }
+
+        return true;
+    }
+
+    /**
+     * @param int         $id
+     * @param string      $name
+     * @param string      $dir
+     * @param string|bool $ext
+     * @param int|null    $width
+     * @param int|null    $height
+     *
+     * @return bool
+     *
+     * @since   1.0.0
+     * @version 1.0.0 Initial version
+     */
+    protected function uploadImage($id, $name, $dir, $ext = false, $width = null, $height = null)
+    {
+        $width = (int) Configuration::get(CustomPayments::IMAGE_WIDTH);
+        $height = (int) Configuration::get(CustomPayments::IMAGE_HEIGHT);
+
+        return parent::uploadImage($id, $name, $dir, $ext, $width, $height);
     }
 }

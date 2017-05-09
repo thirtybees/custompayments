@@ -27,7 +27,6 @@
 
 <style>
     a.custompayments:after {
-        color: #777777;
         content: "\f054";
         display: block;
         font-family: "FontAwesome";
@@ -39,17 +38,12 @@
         top: 50%;
         width: 14px;
     }
-
-    a.custompayments:hover {
-        color: #515151;
-        border-color: #515151;
-    }
 </style>
 {foreach from=$custompayments item=ps}
     <div class="row">
         <div class="col-xs-12">
             <p class="payment_module">
-                <a style="background:url('{$img_ps_dir|escape:'html':'UTF-8'}pay/{$ps.id_custom_payment_method|intval}.jpg') no-repeat scroll 15px 15px #FBFBFB"
+                <a style="background:url('{$ps.logo|escape:'html':'UTF-8'}') no-repeat scroll 15px 15px #FBFBFB"
                    class="custompayments"
                         {if $custompayments_onepage}
                             onclick='showForm({$ps.id_custom_payment_method|intval})' href='javascript:;'

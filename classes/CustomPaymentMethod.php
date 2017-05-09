@@ -42,6 +42,24 @@ class CustomPaymentMethod extends \ObjectModel
     const CART_REAL = 2;
 
     // @codingStandardsIgnoreStart
+    public static $definition = [
+        'table' => 'custom_payment_method',
+        'primary' => 'id_custom_payment_method',
+        'multilang' => true,
+        'multishop' => true,
+        'fields' => [
+            'active'              => ['type' => self::TYPE_BOOL,                   'validate' => 'isBool',       'required' => true,                 'db_type' => 'TINYINT(1)',       'default' => '0'],
+            'date_add'            => ['type' => self::TYPE_DATE,                   'validate' => 'isDateFormat',                                     'db_type' => 'DATETIME'                          ],
+            'date_upd'            => ['type' => self::TYPE_DATE,                   'validate' => 'isDateFormat',                                     'db_type' => 'DATETIME'                          ],
+            'id_order_state'      => ['type' => self::TYPE_INT,                    'validate' => 'isUnsignedId', 'required' => true,                 'db_type' => 'INT(11) UNSIGNED', 'default' => '0'],
+            'id_cart_rule'        => ['type' => self::TYPE_INT,                    'validate' => 'isUnsignedId', 'required' => true,                 'db_type' => 'INT(11) UNSIGNED', 'default' => '0'],
+            'cart_type'           => ['type' => self::TYPE_INT,                    'validate' => 'isInt',                                            'db_type' => 'TINYINT(4)',       'default' => '0'],
+            'name'                => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isGenericName', 'required' => true, 'size' => 128, 'db_type' => 'VARCHAR(128)'                      ],
+            'description'         => ['type' => self::TYPE_HTML,   'lang' => true, 'validate' => 'isString',                                         'db_type' => 'TEXT'                              ],
+            'description_success' => ['type' => self::TYPE_HTML,   'lang' => true, 'validate' => 'isString',                                         'db_type' => 'TEXT'                              ],
+            'description_short'   => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isGenericName', 'required' => true, 'size' => 255, 'db_type' => 'VARCHAR(255)'                      ],
+        ],
+    ];
     public $id;
     public $active = 1;
     public $id_order_state = 3;
@@ -58,24 +76,6 @@ class CustomPaymentMethod extends \ObjectModel
     public $carrier_box;
     public $group_box;
     // @codingStandardsIgnoreEnd
-
-    public static $definition = [
-        'table' => 'custom_payment_method',
-        'primary' => 'id_custom_payment_method',
-        'multilang' => true,
-        'fields' => [
-            'active'              => ['type' => self::TYPE_BOOL,                                   'validate' => 'isBool',       'required' => true                , 'db_type' => 'TINYINT(1)',       'default' => '0'],
-            'date_add'            => ['type' => self::TYPE_DATE,                   'shop' => true, 'validate' => 'isDateFormat'                                    , 'db_type' => 'DATETIME'                          ],
-            'date_upd'            => ['type' => self::TYPE_DATE,                   'shop' => true, 'validate' => 'isDateFormat'                                    , 'db_type' => 'DATETIME'                          ],
-            'id_order_state'      => ['type' => self::TYPE_INT,                                    'validate' => 'isUnsignedId', 'required' => true                , 'db_type' => 'INT(11) UNSIGNED', 'default' => '0'],
-            'id_cart_rule'        => ['type' => self::TYPE_INT,                                    'validate' => 'isUnsignedId', 'required' => true                , 'db_type' => 'INT(11) UNSIGNED', 'default' => '0'],
-            'cart_type'           => ['type' => self::TYPE_INT,                                    'validate' => 'isInt'                                           , 'db_type' => 'TINYINT(4)',       'default' => '0'],
-            'name'                => ['type' => self::TYPE_STRING, 'lang' => true,                 'validate' => 'isGenericName', 'required' => true, 'size' => 128, 'db_type' => 'VARCHAR(128)'                      ],
-            'description'         => ['type' => self::TYPE_HTML,   'lang' => true,                 'validate' => 'isString'                                        , 'db_type' => 'TEXT'                              ],
-            'description_success' => ['type' => self::TYPE_HTML,   'lang' => true,                 'validate' => 'isString'                                        , 'db_type' => 'TEXT'                              ],
-            'description_short'   => ['type' => self::TYPE_STRING, 'lang' => true,                 'validate' => 'isGenericName', 'required' => true, 'size' => 255, 'db_type' => 'VARCHAR(255)'                      ],
-        ],
-    ];
 
     /**
      * CustomPaymentMethod constructor.
@@ -234,7 +234,7 @@ class CustomPaymentMethod extends \ObjectModel
         $sql = new \DbQuery();
         $sql->select('cpmg.`id_group`');
         $sql->from('custom_payment_method_group', 'cpmg');
-        $sql->where('cmpg.`id_custom_payment_method` = '.(int) $this->id);
+        $sql->where('cpmg.`id_custom_payment_method` = '.(int) $this->id);
 
         $result = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
         foreach ($result as $carrier) {
@@ -266,7 +266,7 @@ class CustomPaymentMethod extends \ObjectModel
      */
     public function deleteGroup($idGroup = false)
     {
-        return \Db::getInstance()->execute(
+        return \Db::getInstance()->delete(
             'custom_payment_method_group',
             '`id_custom_payment_method` = '.(int) $this->id.($idGroup ? 'AND `id_group` = '.(int) $idGroup.' LIMIT 1' : '')
         );
@@ -328,36 +328,72 @@ class CustomPaymentMethod extends \ObjectModel
         return $ret;
     }
 
+    /**
+     * Create database
+     *
+     * @param string|null $className
+     *
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public static function createDatabase($className = null)
     {
-        parent::createDatabase($className);
-
         \Db::getInstance()->execute(
-            'CREATE TABLE `'._DB_PREFIX_.'custom_payment_method_shop` (
-		       `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
-		       `id_shop`                  INT(11) UNSIGNED  NOT NULL,
-		       `date_add`                 DATETIME NOT NULL,
-               `date_upd`                 DATETIME NOT NULL,
-		       UNIQUE KEY `id_custom_payment_method_shop` (`id_custom_payment_method`,`id_shop`)
-		     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
+            'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method` (
+               `id_custom_payment_method` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+               `active`                   TINYINT(1) UNSIGNED  NOT NULL,
+               `date_add`                 DATETIME,
+               `date_upd`                 DATETIME,
+               `id_order_state`           INT(11) UNSIGNED NOT NULL,
+               `id_cart_rule`             INT(11) UNSIGNED NOT NULL,
+               `cart_type`                TINYINT(4) UNSIGNED NOT NULL,
+               PRIMARY KEY (`id_custom_payment_method`)
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
+        \Db::getInstance()->execute(
+            'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method_lang` (
+               `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
+               `name`                  VARCHAR(128),
+               `description`           TEXT,
+               `description_success`   TEXT,
+               `description_short`     VARCHAR(255),
+               `id_lang`               INT(11) UNSIGNED NOT NULL
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
+        );
+        \Db::getInstance()->execute('CREATE INDEX `id_custom_payment_method_lang_lang` ON `'._DB_PREFIX_.'custom_payment_method_lang` (`id_lang`)');
+        \Db::getInstance()->execute(
+            'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method_shop` (
+               `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
+               `id_shop`                  INT(11) UNSIGNED  NOT NULL
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
+        );
+        \Db::getInstance()->execute('CREATE INDEX `id_custom_payment_method_shop_shop` ON `'._DB_PREFIX_.'custom_payment_method_shop` (`id_shop`)');
         \Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method_carrier` (
-		       `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
-		       `id_carrier`               INT(11) UNSIGNED NOT NULL,
-		       UNIQUE KEY `custom_payment_method_carrier` (`id_custom_payment_method`,`id_carrier`)
-		     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
+               `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
+               `id_carrier`               INT(11) UNSIGNED NOT NULL
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
+        \Db::getInstance()->execute('CREATE INDEX `custom_payment_method_carrier_carrier` ON `'._DB_PREFIX_.'custom_payment_method_carrier` (`id_carrier`)');
         \Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method_group` (
-		       `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
-		       `id_group`                 INT(11) UNSIGNED NOT NULL,
-		       UNIQUE KEY `id_custom_payment_method_group` (`id_custom_payment_method`,`id_group`)
-		     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
+               `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
+               `id_group`                 INT(11) UNSIGNED NOT NULL
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
-        \Db::getInstance()->execute('ALTER TABLE `'._DB_PREFIX_.'orders` ADD `up_fields` VARCHAR(255) NOT NULL DEFAULT ""');
+        \Db::getInstance()->execute('CREATE INDEX `custom_payment_method_group_group` ON `'._DB_PREFIX_.'custom_payment_method_group` (`id_group`)');
     }
 
+    /**
+     * Drop databases
+     *
+     * @param string|null $className
+     *
+     * @return void
+     *
+     * @since 1.0.0
+     */
     public static function dropDatabase($className = null)
     {
         \Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method`');
@@ -365,6 +401,34 @@ class CustomPaymentMethod extends \ObjectModel
         \Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_carrier`');
         \Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_group`');
         \Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_shop`');
-        \Db::getInstance()->execute('ALTER TABLE `'. _DB_PREFIX_.'orders` DROP `up_fields`');
+    }
+
+    /**
+     * Get local image path
+     *
+     * @param int    $id
+     * @param string $type
+     *
+     * @return string
+     *
+     * @since 1.0.0
+     */
+    public static function getImagePath($id, $type = 'original')
+    {
+        $baseLocation = _PS_IMG_DIR_.'pay/';
+
+        if ($type === 'original') {
+            if (file_exists("{$baseLocation}{$id}.png")) {
+                return "{$baseLocation}{$id}.png";
+            } else {
+                return "{$baseLocation}{$id}.jpg";
+            }
+        }
+
+        if (file_exists("{$baseLocation}{$id}-{$type}.png")) {
+            return "{$baseLocation}{$id}-{$type}.png";
+        } else {
+            return "{$baseLocation}{$id}-{$type}.jpg";
+        }
     }
 }

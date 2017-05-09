@@ -35,6 +35,10 @@ require_once __DIR__.'/classes/autoload.php';
  */
 class CustomPayments extends PaymentModule
 {
+    const CONFIRMATION_BUTTON = 'CUSTOMPAYMENTS_CONF_BUTTON';
+    const IMAGE_WIDTH = 'CUSTOMPAYMENTS_IMAGE_WIDTH';
+    const IMAGE_HEIGHT = 'CUSTOMPAYMENTS_IMAGE_HEIGHT';
+
     protected $paymentMethods = false;
 
     /**
@@ -81,17 +85,19 @@ class CustomPayments extends PaymentModule
         $this->registerHook('displayPayment');
         $this->registerHook('actionCarrierUpdate');
         $this->registerHook('displayOrderDetail');
-        $this->registerHook('displayAdminOrderContentOrder');
-        $this->registerHook('displayAdminOrderTabOrder');
         $this->registerHook('displayPaymentReturn');
         $this->registerHook('advancedPaymentOptions');
 
         mkdir(_PS_IMG_DIR_.'pay');
-        self::installModuleTab(
+        static::installModuleTab(
             'AdminCustomPayments',
             ['default' => 'Custom Payment Methods'],
             'AdminParentModules'
         );
+
+        Configuration::updateGlobalValue(static::CONFIRMATION_BUTTON, true);
+        Configuration::updateGlobalValue(static::IMAGE_HEIGHT, 64);
+        Configuration::updateGlobalValue(static::IMAGE_WIDTH, 64);
 
         return true;
     }
@@ -149,8 +155,7 @@ class CustomPayments extends PaymentModule
 
         self::uninstallModuleTab('AdminCustomPayments');
 
-        return self::rrmdir(_PS_IMG_DIR_.'pay')
-            && parent::uninstall();
+        return self::rrmdir(_PS_IMG_DIR_.'pay') && parent::uninstall();
     }
 
     /**
@@ -219,7 +224,7 @@ class CustomPayments extends PaymentModule
         /** @var Order $order */
         $order = $params['objOrder'];
 
-        $customPaymentMethod = new CustomPaymentMethod((int) Tools::getValue('id_custompayments_system'), $this->context->cookie->id_lang);
+        $customPaymentMethod = new CustomPaymentMethod((int) Tools::getValue(CustomPaymentMethod::$definition['primary']), $this->context->cookie->id_lang);
         $descriptionSuccess = str_replace(
             ['%total%', '%order_number%', '%order_id%'],
             [
@@ -231,30 +236,6 @@ class CustomPayments extends PaymentModule
         );
 
         return '<div class="box">'.$descriptionSuccess.'</div>';
-    }
-
-    /**
-     * @param array $params
-     *
-     * @return string
-     *
-     * @since 1.0.0
-     */
-    public function hookdisplayAdminOrderTabOrder($params)
-    {
-        return $this->display(__FILE__, 'displayAdminOrderTabOrder.tpl');
-    }
-
-    /**
-     * @param $params
-     *
-     * @return string
-     *
-     * @since 1.0.0
-     */
-    public function hookdisplayAdminOrderContentOrder($params)
-    {
-        return $this->display(__FILE__, 'displayAdminOrderContentOrder.tpl');
     }
 
     /**
@@ -318,19 +299,18 @@ class CustomPayments extends PaymentModule
 
         $virtual = $this->context->cart->isVirtualCart();
         $customPaymentMethods = $this->getCustomPaymentMethods($params);
-        foreach ($customPaymentMethods as $key => $paysystem) {
-            if (($paysystem['cart_type'] == CustomPaymentMethod::CART_REAL) && $virtual) {
+        foreach ($customPaymentMethods as $key => &$paymentMethod) {
+            if (($paymentMethod['cart_type'] == CustomPaymentMethod::CART_REAL) && $virtual) {
                 unset($customPaymentMethods[$key]);
-            } elseif (($paysystem['cart_type'] == CustomPaymentMethod::CART_VIRTUAL) && !$virtual) {
+            } elseif (($paymentMethod['cart_type'] == CustomPaymentMethod::CART_VIRTUAL) && !$virtual) {
                 unset($customPaymentMethods[$key]);
             }
+            $paymentMethod['logo'] = Media::getMediaPath(CustomPaymentMethod::getImagePath($paymentMethod['id_custom_payment_method']));
         }
         $this->smarty->assign(
             [
-                'this_path'            => $this->_path,
-                'this_path_ssl'        => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/',
                 'custompayments'         => $customPaymentMethods,
-                'custompayments_onepage' => Configuration::get('custompayments_onepage'),
+                'custompayments_onepage' => Configuration::get(static::CONFIRMATION_BUTTON),
             ]
         );
 
@@ -344,12 +324,12 @@ class CustomPayments extends PaymentModule
      */
     public function checkCurrency(Cart $cart)
     {
-        $currency_order = new Currency($cart->id_currency);
+        $orderCurrency = new Currency($cart->id_currency);
         $moduleCurrrencies = $this->getCurrency((int) $cart->id_currency);
 
         if (is_array($moduleCurrrencies)) {
             foreach ($moduleCurrrencies as $moduleCurrency) {
-                if ($currency_order->id == $moduleCurrency['id_currency']) {
+                if ($orderCurrency->id == $moduleCurrency['id_currency']) {
                     return true;
                 }
             }
@@ -374,24 +354,23 @@ class CustomPayments extends PaymentModule
             return $this->paymentMethods;
         }
 
-        $paysystems = CustomPaymentMethod::getCustomPaymentMethods(
+        $paymentMethods = CustomPaymentMethod::getCustomPaymentMethods(
             $this->context->language->id,
             true,
             $this->context->cart->id_carrier,
             $this->context->customer->getGroups()
         );
 
-        foreach ($paysystems as &$paysystem) {
-            $paysystem['description'] = str_replace(
+        foreach ($paymentMethods as &$paymentMethod) {
+            $paymentMethod['description'] = str_replace(
                 ['%total%'],
                 [Tools::DisplayPrice($cart->getOrderTotal(true, Cart::BOTH))],
-                $paysystem['description']
+                $paymentMethod['description']
             );
         }
-        unset($paysystem);
-        $this->paymentMethods = $paysystems;
+        $this->paymentMethods = $paymentMethods;
 
-        return $paysystems;
+        return $paymentMethods;
     }
 
     /**
@@ -401,25 +380,28 @@ class CustomPayments extends PaymentModule
      */
     public function getContent()
     {
-        $output = '';
-        $output .= $this->postProcess();
-        $output .= $this->renderSettingsForm();
+        $this->postProcess();
 
-        return $output;
+        return $this->renderSettingsForm();
     }
 
     /**
-     * @return string
-     *
      * @since 1.0.0
      */
     protected function postProcess()
     {
         if (Tools::isSubmit('submitSave')) {
-            if (Configuration::updateValue('custompayments_onepage', (int) Tools::getValue('custompayments_onepage'))) {
-                return $this->displayConfirmation($this->l('Settings updated'));
+            Configuration::updateValue(static::CONFIRMATION_BUTTON, (bool) Tools::getValue(static::CONFIRMATION_BUTTON));
+            $height = (int) Tools::getValue(static::IMAGE_HEIGHT);
+            $width = (int) Tools::getValue(static::IMAGE_WIDTH);
+
+            if ($height * $width <= 0) {
+                $this->context->controller->errors[] = $this->l('Logo width or height is incorrect');
             } else {
-                return $this->displayError($this->l('Confirmation button').': '.$this->l('Invaild choice'));
+                Configuration::updateValue(static::IMAGE_HEIGHT, $height);
+                Configuration::updateValue(static::IMAGE_WIDTH, $width);
+
+                $this->context->controller->confirmations[] = $this->l('Settings successfully updated');
             }
         }
     }
@@ -439,21 +421,35 @@ class CustomPayments extends PaymentModule
                     [
                         'type'    => 'switch',
                         'label'   => $this->l('Confirmation button'),
-                        'hint'    => $this->l('Confirmation button directly in the checkout page'),
-                        'name'    => 'custompayments_onepage',
+                        'hint'    => $this->l('Show a confirmation button directly on the checkout page'),
+                        'name'    => static::CONFIRMATION_BUTTON,
                         'is_bool' => true,
                         'values'  => [
                             [
-                                'id'    => 'custompayments_onepage_on',
+                                'id'    => static::CONFIRMATION_BUTTON.'_on',
                                 'value' => 1,
                                 'label' => $this->l('Enabled'),
                             ],
                             [
-                                'id'    => 'custompayments_onepage_off',
+                                'id'    => static::CONFIRMATION_BUTTON.'_off',
                                 'value' => 0,
                                 'label' => $this->l('Disabled'),
                             ],
                         ],
+                    ],
+                    [
+                        'type'  => 'text',
+                        'label' => $this->l('Logo width'),
+                        'name'  => static::IMAGE_WIDTH,
+                        'class' => 'fixed-width-xs',
+                        'desc'  => $this->l('Defines the width of payment logos.'),
+                    ],
+                    [
+                        'type'  => 'text',
+                        'label' => $this->l('Logo height'),
+                        'name'  => static::IMAGE_HEIGHT,
+                        'class' => 'fixed-width-xs',
+                        'desc'  => $this->l('Defines the height of payment logos.'),
                     ],
                 ],
                 'submit'      => [
@@ -491,9 +487,10 @@ class CustomPayments extends PaymentModule
      */
     public function getConfigFieldsValues()
     {
-        $fieldsValue = [];
-        $fieldsValue['custompayments_onepage'] = Configuration::get('custompayments_onepage');
-
-        return $fieldsValue;
+        return [
+            static::CONFIRMATION_BUTTON => Configuration::get(static::CONFIRMATION_BUTTON),
+            static::IMAGE_WIDTH => Configuration::get(static::IMAGE_WIDTH),
+            static::IMAGE_HEIGHT => Configuration::get(static::IMAGE_HEIGHT),
+        ];
     }
 }
