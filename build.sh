@@ -7,6 +7,7 @@ FILES+=("logo.png")
 FILES+=("classes/**")
 FILES+=("controllers/**")
 FILES+=("translations/**")
+FILES+=("upgrade/**")
 FILES+=("views/**")
 
 CWD_BASENAME=${PWD##*/}

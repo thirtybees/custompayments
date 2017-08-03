@@ -83,6 +83,7 @@ class CustomPayments extends PaymentModule
         }
 
         $this->registerHook('displayPayment');
+        $this->registerHook('displayPaymentEU');
         $this->registerHook('actionCarrierUpdate');
         $this->registerHook('displayOrderDetail');
         $this->registerHook('displayPaymentReturn');
@@ -315,6 +316,44 @@ class CustomPayments extends PaymentModule
         );
 
         return $this->display(__FILE__, 'payment.tpl');
+    }
+
+    /**
+     * Hook to Advanced EU checkout
+     *
+     * @param array $params Hook parameters
+     *
+     * @return array|bool Smarty variables, nothing if should not be shown
+     */
+    public function hookDisplayPaymentEU($params)
+    {
+        /** @var Cart $cart */
+        $cart = $params['cart'];
+
+        if (!$this->active) {
+            return null;
+        }
+        if (!$this->checkCurrency($cart)) {
+            return null;
+        }
+
+        $virtual = $this->context->cart->isVirtualCart();
+        $customPaymentMethods = $this->getCustomPaymentMethods($params);
+        $paymentOptions = [];
+        foreach ($customPaymentMethods as $key => &$paymentMethod) {
+            if (($paymentMethod['cart_type'] == CustomPaymentMethod::CART_REAL) && $virtual) {
+                continue;
+            } elseif (($paymentMethod['cart_type'] == CustomPaymentMethod::CART_VIRTUAL) && !$virtual) {
+                continue;
+            }
+            $paymentOptions[] = [
+                'cta_text' => $paymentMethod['name'],
+                'logo'     => Media::getMediaPath(CustomPaymentMethod::getImagePath($paymentMethod['id_custom_payment_method'])),
+                'action'   => $this->context->link->getModuleLink('custompayments', 'payment', ['id_custom_payment_method' => $paymentMethod['id_custom_payment_method']], true),
+            ];
+        }
+
+        return $paymentOptions;
     }
 
     /**
