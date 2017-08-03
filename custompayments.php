@@ -153,9 +153,9 @@ class CustomPayments extends PaymentModule
     {
         CustomPaymentMethod::dropDatabase();
 
-        self::uninstallModuleTab('AdminCustomPayments');
+        static::uninstallModuleTab('AdminCustomPayments');
 
-        return self::rrmdir(_PS_IMG_DIR_.'pay') && parent::uninstall();
+        return static::rrmdir(_PS_IMG_DIR_.'pay') && parent::uninstall();
     }
 
     /**
@@ -196,7 +196,7 @@ class CustomPayments extends PaymentModule
             foreach ($objects as $object) {
                 if ($object != '.' && $object != '..') {
                     if (filetype($dir.'/'.$object) == 'dir') {
-                        self::rrmdir($dir.'/'.$object);
+                        static::rrmdir($dir.'/'.$object);
                     } else {
                         unlink($dir.'/'.$object);
                     }
