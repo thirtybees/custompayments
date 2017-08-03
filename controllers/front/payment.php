@@ -38,9 +38,14 @@ if (!defined('_TB_VERSION_')) {
 class CustompaymentspaymentModuleFrontController extends ModuleFrontController
 {
     // @codingStandardsIgnoreStart
+    /** @var bool $display_column_left */
     public $display_column_left = false;
+    /** @var bool $display_column_right */
     public $display_column_right = false;
+    /** @var bool $ssl */
     public $ssl = true;
+    /** @var CustomPayments $module */
+    public $module;
     // @codingStandardsIgnoreEnd
 
     /**
@@ -53,6 +58,8 @@ class CustompaymentspaymentModuleFrontController extends ModuleFrontController
         $cart = $this->context->cart;
 
         $customPaymentMethod = new CustomPaymentMethod((int) Tools::getValue('id_custom_payment_method'), $this->context->cookie->id_lang);
+        $customPaymentMethods = $this->module->getCustomPaymentMethods(['cart' => $cart]);
+        $paymentMethodAvailable = in_array($customPaymentMethod->id, array_column($customPaymentMethods, 'id_custom_payment_method'));
 
         if (!Validate::isLoadedObject($customPaymentMethod)) {
             return;
@@ -67,10 +74,11 @@ class CustompaymentspaymentModuleFrontController extends ModuleFrontController
 
         $this->context->smarty->assign(
             [
-                'nbProducts'          => $cart->nbProducts(),
-                'customPaymentMethod' => $customPaymentMethod,
-                'this_path'           => $this->module->getPathUri(),
-                'this_path_ssl'       => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/',
+                'nbProducts'             => $cart->nbProducts(),
+                'customPaymentMethod'    => $customPaymentMethod,
+                'this_path'              => $this->module->getPathUri(),
+                'this_path_ssl'          => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/',
+                'paymentMethodAvailable' => $paymentMethodAvailable,
             ]
         );
 

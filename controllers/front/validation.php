@@ -37,6 +37,11 @@ if (!defined('_TB_VERSION_')) {
  */
 class CustompaymentsvalidationModuleFrontController extends ModuleFrontController
 {
+    // @codingStandardsIgnoreStart
+    /** @var CustomPayments $module */
+    public $module;
+    // @codingStandardsIgnoreEnd
+
     /**
      * @since 1.0.0
      */
@@ -56,20 +61,26 @@ class CustompaymentsvalidationModuleFrontController extends ModuleFrontControlle
                 break;
             }
         }
+        $customPaymentMethod = new CustomPaymentMethod((int) Tools::getValue('id_custom_payment_method'), $this->context->cookie->id_lang);
+        if (!Validate::isLoadedObject($customPaymentMethod)) {
+            $this->errors[] = $this->module->l('This payment method is not available.', 'validation');
 
-        if (!$authorized) {
-            die($this->module->l('This payment method is not available.', 'validation'));
+            return;
+        }
+
+        $customPaymentMethods = $this->module->getCustomPaymentMethods(['cart' => $cart]);
+        $paymentMethodAvailable = in_array($customPaymentMethod->id, array_column($customPaymentMethods, 'id_custom_payment_method'));
+
+        if (!$authorized || !$paymentMethodAvailable) {
+            $this->errors[] = $this->module->l('This payment method is not available.', 'validation');
+
+            return;
         }
 
         $customer = new Customer($cart->id_customer);
 
         if (!Validate::isLoadedObject($customer)) {
             Tools::redirect('index.php?controller=order&step=1');
-        }
-
-        $customPaymentMethod = new CustomPaymentMethod((int) Tools::getValue('id_custom_payment_method'), $this->context->cookie->id_lang);
-        if (!Validate::isLoadedObject($customPaymentMethod)) {
-            return;
         }
 
         if ($customPaymentMethod->id_cart_rule) {
@@ -102,26 +113,5 @@ class CustompaymentsvalidationModuleFrontController extends ModuleFrontControlle
         $this->module->validateOrder((int) $cart->id, $customPaymentMethod->id_order_state, $total, $customPaymentMethod->name, null, $mailVars, (int) $currency->id, false, $customer->secure_key);
 
         Tools::redirect('index.php?controller=order-confirmation&id_cart='.(int) $cart->id.'&id_module='.(int) $this->module->id.'&id_order='.$this->module->currentOrder.'&key='.$customer->secure_key.'&id_custom_payment_method='.$customPaymentMethod->id);
-    }
-
-    /**
-     * Set template
-     *
-     * @param string $defaultTemplate
-     *
-     * @since 1.0.0
-     */
-    public function setTemplate($defaultTemplate)
-    {
-        if ($this->context->getMobileDevice() != false) {
-            $this->setMobileTemplate($defaultTemplate);
-        } else {
-            $template = $this->getOverrideTemplate();
-            if ($template) {
-                $this->template = $template;
-            } else {
-                $this->template = $defaultTemplate;
-            }
-        }
     }
 }

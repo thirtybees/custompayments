@@ -50,7 +50,7 @@ class CustomPayments extends PaymentModule
     {
         $this->name = 'custompayments';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.0';
+        $this->version = '1.1.0';
         $this->author = 'thirty bees';
         $this->need_instance = 1;
 
@@ -350,14 +350,10 @@ class CustomPayments extends PaymentModule
         /** @var Cart $cart */
         $cart = $params['cart'];
 
-        if ($this->paymentMethods) {
-            return $this->paymentMethods;
-        }
-
         $paymentMethods = CustomPaymentMethod::getCustomPaymentMethods(
             $this->context->language->id,
             true,
-            $this->context->cart->id_carrier,
+            $cart->id_carrier,
             $this->context->customer->getGroups()
         );
 

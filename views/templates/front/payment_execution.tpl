@@ -38,6 +38,10 @@
     <p class="alert alert-warning">
         {l s='Your shopping cart is empty.' mod='custompayments'}
     </p>
+{elseif isset($paymentMethodAvailable) && !$paymentMethodAvailable}
+    <p class="alert alert-error">
+        {l s='The selected payment method is not available. Please try a different payment method.' mod='custompayments'}
+    </p>
 {else}
     <form action="{$link->getModuleLink('custompayments', 'validation', [], true)|escape:'html':'UTF-8'}" method="post">
         <div class="box cheque-box">
