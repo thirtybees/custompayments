@@ -11,6 +11,7 @@ FILES+=("classes/**")
 FILES+=("controllers/**")
 FILES+=("translations/**")
 FILES+=("upgrade/**")
+FILES+=("vendor/**")
 FILES+=("views/**")
 
 CWD_BASENAME=${PWD##*/}
