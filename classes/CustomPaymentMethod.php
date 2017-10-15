@@ -26,6 +26,13 @@
 
 namespace CustomPaymentsModule;
 
+use Context;
+use Db;
+use DbQuery;
+use ObjectModel;
+use Tools;
+use Validate;
+
 if (!defined('_TB_VERSION_')) {
     exit;
 }
@@ -35,7 +42,7 @@ if (!defined('_TB_VERSION_')) {
  *
  * @sinc 1.0.0
  */
-class CustomPaymentMethod extends \ObjectModel
+class CustomPaymentMethod extends ObjectModel
 {
     const CART_BOTH = 0;
     const CART_VIRTUAL = 1;
@@ -105,8 +112,8 @@ class CustomPaymentMethod extends \ObjectModel
      */
     public static function getCustomPaymentMethods($idLang, $active = true, $idCarrier = false, $groups = [])
     {
-        if (!\Validate::isBool($active)) {
-            die(\Tools::displayError());
+        if (!Validate::isBool($active)) {
+            die(Tools::displayError());
         }
 
         if (!empty($groups)) {
@@ -115,24 +122,22 @@ class CustomPaymentMethod extends \ObjectModel
             }
         }
 
-        $sql = new \DbQuery();
-        $sql->select('*');
+        $sql = new DbQuery();
+        $sql->select('cpm.*, cpml.`id_lang`, cpms.`id_shop`, cpmc.`id_carrier`, cpmg.`id_group`, cpml.`name`, cpml.`description`, cpml.`description_success`, cpml.`description_short`');
         $sql->from(bqSQL(self::$definition['table']), 'cpm');
-        $sql->leftJoin(bqSQL(self::$definition['table']).'_lang', 'cpml', 'cpml.`'.bqSQL(self::$definition['primary']).'` = cpm.`'.bqSQL(self::$definition['primary']).'`');
-        $sql->leftJoin(bqSQL(self::$definition['table']).'_shop', 'cpms', 'cpms.`'.bqSQL(self::$definition['primary']).'` = cpm.`'.bqSQL(self::$definition['primary']).'`');
+        $sql->leftJoin(bqSQL(self::$definition['table']).'_lang', 'cpml', 'cpml.`'.bqSQL(self::$definition['primary']).'` = cpm.`'.bqSQL(self::$definition['primary']).'` AND cpml.`id_lang` = '.(int) $idLang);
+        $sql->leftJoin(bqSQL(self::$definition['table']).'_shop', 'cpms', 'cpms.`'.bqSQL(self::$definition['primary']).'` = cpm.`'.bqSQL(self::$definition['primary']).'` AND cpms.`id_shop` = '.(int) Context::getContext()->shop->id);
         if ($idCarrier) {
             $sql->innerJoin('custom_payment_method_carrier', 'cpmc', 'cpmc.`id_carrier` = '.(int) $idCarrier);
         }
         if (!empty($groups) && \Group::isFeatureActive()) {
-            $sql->innerJoin('custom_payment_method_group', 'cmpg', 'cmpg.`id_group` IN ('.implode($groups, ',').')');
+            $sql->innerJoin('custom_payment_method_group', 'cpmg', 'cpmg.`id_group` IN ('.implode($groups, ',').')');
         }
-        $sql->where('cpml.`id_lang` = '.(int) $idLang);
-        $sql->where('cpms.`id_shop` = '.(int) \Context::getContext()->shop->id);
         if ($active) {
             $sql->where('`active` = 1');
         }
-        $sql->groupBy('cpms.`'.bqSQL(self::$definition['primary']).'`');
-        $result = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $sql->groupBy('cpm.`'.bqSQL(self::$definition['primary']).'`');
+        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
 
         return $result;
     }
@@ -146,12 +151,12 @@ class CustomPaymentMethod extends \ObjectModel
      */
     public static function getIdByName($name)
     {
-        $sql = new \DbQuery();
+        $sql = new DbQuery();
         $sql->select(bqSQL(self::$definition['primary']));
         $sql->from(bqSQL(self::$definition['table']).'_lang');
         $sql->where('`name` = \''.pSQL($name).'\'');
 
-        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($sql);
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($sql);
     }
 
     /**
@@ -163,12 +168,12 @@ class CustomPaymentMethod extends \ObjectModel
     {
         $carriers = [];
 
-        $sql = new \DbQuery();
+        $sql = new DbQuery();
         $sql->select('cpmc.`id_carrier`');
         $sql->from('custom_payment_method_carrier', 'cpmc');
         $sql->where('cpmc.`'.bqSQL(self::$definition['primary']).'` = '.(int) $this->id);
 
-        $result = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
         foreach ($result as $carrier) {
             $carriers[] = $carrier['id_carrier'];
         }
@@ -185,7 +190,7 @@ class CustomPaymentMethod extends \ObjectModel
     {
         foreach ($carriers as $carrier) {
             $row = ['id_custom_payment_method' => (int) $this->id, 'id_carrier' => (int) $carrier];
-            \Db::getInstance()->insert('custom_payment_method_carrier', $row);
+            Db::getInstance()->insert('custom_payment_method_carrier', $row);
         }
     }
 
@@ -199,7 +204,7 @@ class CustomPaymentMethod extends \ObjectModel
      */
     public static function updateCarrier($oldCarrierId, $newCarrierId)
     {
-        \Db::getInstance()->update(
+        Db::getInstance()->update(
             'custom_payment_method_carrier',
             ['id_carrier' => (int) $newCarrierId],
             'id_carrier ='.(int) $oldCarrierId
@@ -217,7 +222,7 @@ class CustomPaymentMethod extends \ObjectModel
      */
     public function deleteCarrier($idCarrier = false)
     {
-        return \Db::getInstance()->delete(
+        return Db::getInstance()->delete(
             'custom_payment_method_carrier',
             '`id_custom_payment_method` = '.(int) $this->id.($idCarrier ? 'AND `id_carrier` = '.(int) $idCarrier.' LIMIT 1' : '')
         );
@@ -231,12 +236,12 @@ class CustomPaymentMethod extends \ObjectModel
     public function getGroups()
     {
         $carriers = [];
-        $sql = new \DbQuery();
+        $sql = new DbQuery();
         $sql->select('cpmg.`id_group`');
         $sql->from('custom_payment_method_group', 'cpmg');
         $sql->where('cpmg.`id_custom_payment_method` = '.(int) $this->id);
 
-        $result = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
         foreach ($result as $carrier) {
             $carriers[] = $carrier['id_group'];
         }
@@ -253,7 +258,7 @@ class CustomPaymentMethod extends \ObjectModel
     {
         foreach ($groups as $group) {
             $row = ['id_custom_payment_method' => (int) $this->id, 'id_group' => (int) $group];
-            \Db::getInstance()->insert('custom_payment_method_group', $row);
+            Db::getInstance()->insert('custom_payment_method_group', $row);
         }
     }
 
@@ -266,7 +271,7 @@ class CustomPaymentMethod extends \ObjectModel
      */
     public function deleteGroup($idGroup = false)
     {
-        return \Db::getInstance()->delete(
+        return Db::getInstance()->delete(
             'custom_payment_method_group',
             '`id_custom_payment_method` = '.(int) $this->id.($idGroup ? 'AND `id_group` = '.(int) $idGroup.' LIMIT 1' : '')
         );
@@ -339,7 +344,7 @@ class CustomPaymentMethod extends \ObjectModel
      */
     public static function createDatabase($className = null)
     {
-        \Db::getInstance()->execute(
+        Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method` (
                `id_custom_payment_method` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
                `active`                   TINYINT(1) UNSIGNED  NOT NULL,
@@ -351,7 +356,7 @@ class CustomPaymentMethod extends \ObjectModel
                PRIMARY KEY (`id_custom_payment_method`)
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
-        \Db::getInstance()->execute(
+        Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method_lang` (
                `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
                `name`                  VARCHAR(128),
@@ -361,28 +366,28 @@ class CustomPaymentMethod extends \ObjectModel
                `id_lang`               INT(11) UNSIGNED NOT NULL
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
-        \Db::getInstance()->execute('CREATE INDEX `id_custom_payment_method_lang_lang` ON `'._DB_PREFIX_.'custom_payment_method_lang` (`id_lang`)');
-        \Db::getInstance()->execute(
+        Db::getInstance()->execute('CREATE INDEX `id_custom_payment_method_lang_lang` ON `'._DB_PREFIX_.'custom_payment_method_lang` (`id_lang`)');
+        Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method_shop` (
                `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
                `id_shop`                  INT(11) UNSIGNED  NOT NULL
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
-        \Db::getInstance()->execute('CREATE INDEX `id_custom_payment_method_shop_shop` ON `'._DB_PREFIX_.'custom_payment_method_shop` (`id_shop`)');
-        \Db::getInstance()->execute(
+        Db::getInstance()->execute('CREATE INDEX `id_custom_payment_method_shop_shop` ON `'._DB_PREFIX_.'custom_payment_method_shop` (`id_shop`)');
+        Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method_carrier` (
                `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
                `id_carrier`               INT(11) UNSIGNED NOT NULL
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
-        \Db::getInstance()->execute('CREATE INDEX `custom_payment_method_carrier_carrier` ON `'._DB_PREFIX_.'custom_payment_method_carrier` (`id_carrier`)');
-        \Db::getInstance()->execute(
+        Db::getInstance()->execute('CREATE INDEX `custom_payment_method_carrier_carrier` ON `'._DB_PREFIX_.'custom_payment_method_carrier` (`id_carrier`)');
+        Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'custom_payment_method_group` (
                `id_custom_payment_method` INT(11) UNSIGNED NOT NULL,
                `id_group`                 INT(11) UNSIGNED NOT NULL
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
-        \Db::getInstance()->execute('CREATE INDEX `custom_payment_method_group_group` ON `'._DB_PREFIX_.'custom_payment_method_group` (`id_group`)');
+        Db::getInstance()->execute('CREATE INDEX `custom_payment_method_group_group` ON `'._DB_PREFIX_.'custom_payment_method_group` (`id_group`)');
     }
 
     /**
@@ -396,11 +401,11 @@ class CustomPaymentMethod extends \ObjectModel
      */
     public static function dropDatabase($className = null)
     {
-        \Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method`');
-        \Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_lang`');
-        \Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_carrier`');
-        \Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_group`');
-        \Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_shop`');
+        Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method`');
+        Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_lang`');
+        Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_carrier`');
+        Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_group`');
+        Db::getInstance()->execute('DROP TABLE `'._DB_PREFIX_.'custom_payment_method_shop`');
     }
 
     /**
