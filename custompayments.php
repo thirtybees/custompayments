@@ -26,7 +26,7 @@
 
 use CustomPaymentsModule\CustomPaymentMethod;
 
-require_once __DIR__.'/classes/autoload.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 /**
  * Class CustomPayments
@@ -50,7 +50,7 @@ class CustomPayments extends PaymentModule
     {
         $this->name = 'custompayments';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.0';
+        $this->version = '1.2.0';
         $this->author = 'thirty bees';
         $this->need_instance = 1;
 

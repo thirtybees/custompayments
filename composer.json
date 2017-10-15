@@ -1,0 +1,15 @@
+{
+    "name": "thirtybees/custompayments",
+    "description": "Custom payments module for thirty bees",
+    "type": "library",
+    "license": "AFLv3",
+    "authors": [
+        {
+            "name": "Michael Dekker",
+            "email": "git@michaeldekker.nl"
+        }
+    ],
+    "autoload": {
+        "classmap": ["classes/"]
+    }
+}

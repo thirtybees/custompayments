@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+composer install --no-dev
+composer -o dump-autoload
+
 FILES=("index.php")
 FILES+=("custompayments.php")
 FILES+=("logo.gif")
