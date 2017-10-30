@@ -123,7 +123,10 @@ class CustomPaymentMethod extends ObjectModel
         }
 
         $sql = new DbQuery();
-        $sql->select('cpm.*, cpml.`id_lang`, cpms.`id_shop`, cpmc.`id_carrier`, cpmg.`id_group`, cpml.`name`, cpml.`description`, cpml.`description_success`, cpml.`description_short`');
+        $sql->select('cpm.*, cpml.`id_lang`, cpms.`id_shop`, cpmg.`id_group`, cpml.`name`, cpml.`description`, cpml.`description_success`, cpml.`description_short`');
+        if ($idCarrier) {
+            $sql->select('cpmc.`id_carrier`');
+        }
         $sql->from(bqSQL(self::$definition['table']), 'cpm');
         $sql->leftJoin(bqSQL(self::$definition['table']).'_lang', 'cpml', 'cpml.`'.bqSQL(self::$definition['primary']).'` = cpm.`'.bqSQL(self::$definition['primary']).'` AND cpml.`id_lang` = '.(int) $idLang);
         $sql->leftJoin(bqSQL(self::$definition['table']).'_shop', 'cpms', 'cpms.`'.bqSQL(self::$definition['primary']).'` = cpm.`'.bqSQL(self::$definition['primary']).'` AND cpms.`id_shop` = '.(int) Context::getContext()->shop->id);
