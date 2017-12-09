@@ -1,0 +1,1 @@
+The custom payments module allows you to add new non transactional payments to your site such as pickup in store, COD, purchase orders, and more.
