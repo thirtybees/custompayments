@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2017 thirty bees
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
@@ -15,7 +15,7 @@
  * @author    0RS <admin@prestalab.ru>
  * @author    thirty bees <modules@thirtybees.com>
  * @copyright 2009-2017 PrestaLab.Ru
- * @copyright 2017 thirty bees
+ * @copyright 2017-2018 thirty bees
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  *
  * This module is based on the original `universalpay` module
@@ -45,6 +45,7 @@ class CustomPayments extends PaymentModule
      * CustomPayments constructor.
      *
      * @since 1.0.0
+     * @throws PrestaShopException
      */
     public function __construct()
     {
@@ -73,6 +74,7 @@ class CustomPayments extends PaymentModule
      * @return bool Indicates whether this module has been installed successfully
      *
      * @since 1.0.0
+     * @throws PrestaShopException
      */
     public function install()
     {
@@ -112,6 +114,8 @@ class CustomPayments extends PaymentModule
      *
      * @return bool
      *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     private function installModuleTab($tabClass, $tabName, $tabParent)
@@ -149,6 +153,8 @@ class CustomPayments extends PaymentModule
      * Uninstall this module
      *
      * @return bool Indicates whether this module has been successfully uninstalled
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function uninstall()
     {
@@ -166,6 +172,8 @@ class CustomPayments extends PaymentModule
      *
      * @return bool
      *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     private function uninstallModuleTab($tabClass)
@@ -219,13 +227,17 @@ class CustomPayments extends PaymentModule
      * @return string
      *
      * @since 1.0.0
+     * @throws PrestaShopException
      */
     public function hookdisplayPaymentReturn($params)
     {
         /** @var Order $order */
         $order = $params['objOrder'];
 
-        $customPaymentMethod = new CustomPaymentMethod((int) Tools::getValue(CustomPaymentMethod::$definition['primary']), $this->context->cookie->id_lang);
+        $customPaymentMethod = new CustomPaymentMethod(
+            (int) Tools::getValue(CustomPaymentMethod::$definition['primary']),
+            $this->context->cookie->id_lang
+        );
         $descriptionSuccess = str_replace(
             ['%total%', '%order_number%', '%order_id%'],
             [
@@ -244,6 +256,8 @@ class CustomPayments extends PaymentModule
      *
      * @param array $params
      *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function hookactionCarrierUpdate($params)
@@ -259,6 +273,7 @@ class CustomPayments extends PaymentModule
      * @return bool|mixed
      *
      * @since 1.0.0
+     * @throws PrestaShopException
      */
     public function hookdisplayOrderDetail($params)
     {
@@ -285,6 +300,10 @@ class CustomPayments extends PaymentModule
      * @param array $params
      *
      * @return string|null
+     * @throws Exception
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     * @throws SmartyException
      */
     public function hookDisplayPayment($params)
     {
@@ -306,7 +325,8 @@ class CustomPayments extends PaymentModule
             } elseif (($paymentMethod['cart_type'] == CustomPaymentMethod::CART_VIRTUAL) && !$virtual) {
                 unset($customPaymentMethods[$key]);
             }
-            $paymentMethod['logo'] = Media::getMediaPath(CustomPaymentMethod::getImagePath($paymentMethod['id_custom_payment_method']));
+            $paymentMethod['logo'] =
+                Media::getMediaPath(CustomPaymentMethod::getImagePath($paymentMethod['id_custom_payment_method']));
         }
         $this->smarty->assign(
             [
@@ -324,6 +344,8 @@ class CustomPayments extends PaymentModule
      * @param array $params Hook parameters
      *
      * @return array|bool Smarty variables, nothing if should not be shown
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function hookDisplayPaymentEU($params)
     {
@@ -348,8 +370,15 @@ class CustomPayments extends PaymentModule
             }
             $paymentOptions[] = [
                 'cta_text' => $paymentMethod['name'],
-                'logo'     => Media::getMediaPath(CustomPaymentMethod::getImagePath($paymentMethod['id_custom_payment_method'])),
-                'action'   => $this->context->link->getModuleLink('custompayments', 'payment', ['id_custom_payment_method' => $paymentMethod['id_custom_payment_method']], true),
+                'logo'     => Media::getMediaPath(
+                    CustomPaymentMethod::getImagePath($paymentMethod['id_custom_payment_method'])
+                ),
+                'action'   => $this->context->link->getModuleLink(
+                    'custompayments',
+                    'payment',
+                    ['id_custom_payment_method' => $paymentMethod['id_custom_payment_method']],
+                    true
+                ),
             ];
         }
 
@@ -360,6 +389,8 @@ class CustomPayments extends PaymentModule
      * @param Cart $cart
      *
      * @return bool
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function checkCurrency(Cart $cart)
     {
@@ -382,6 +413,8 @@ class CustomPayments extends PaymentModule
      *
      * @return array|bool|false|mysqli_result|null|PDOStatement|resource
      *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function getCustomPaymentMethods($params)
@@ -411,6 +444,10 @@ class CustomPayments extends PaymentModule
     /**
      * @return string
      *
+     * @throws Exception
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     * @throws SmartyException
      * @since 1.0.0
      */
     public function getContent()
@@ -422,11 +459,15 @@ class CustomPayments extends PaymentModule
 
     /**
      * @since 1.0.0
+     * @throws PrestaShopException
      */
     protected function postProcess()
     {
         if (Tools::isSubmit('submitSave')) {
-            Configuration::updateValue(static::CONFIRMATION_BUTTON, (bool) Tools::getValue(static::CONFIRMATION_BUTTON));
+            Configuration::updateValue(
+                static::CONFIRMATION_BUTTON,
+                (bool) Tools::getValue(static::CONFIRMATION_BUTTON)
+            );
             $height = (int) Tools::getValue(static::IMAGE_HEIGHT);
             $width = (int) Tools::getValue(static::IMAGE_WIDTH);
 
@@ -443,6 +484,10 @@ class CustomPayments extends PaymentModule
 
     /**
      * @return string
+     * @throws Exception
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     * @throws SmartyException
      */
     protected function renderSettingsForm()
     {
@@ -499,11 +544,14 @@ class CustomPayments extends PaymentModule
         $helper->table = $this->table;
         $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
         $helper->default_form_language = $lang->id;
-        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG')
+            ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG')
+            : 0;
         $this->fields_form = [];
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitSave';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
+            .'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
             'fields_value' => $this->getConfigFieldsValues(),
@@ -519,6 +567,7 @@ class CustomPayments extends PaymentModule
      * @return array
      *
      * @since 1.0.0
+     * @throws PrestaShopException
      */
     public function getConfigFieldsValues()
     {

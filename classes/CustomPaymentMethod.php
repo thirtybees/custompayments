@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (C) 2017 thirty bees
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
@@ -15,7 +15,7 @@
  * @author    0RS <admin@prestalab.ru>
  * @author    thirty bees <modules@thirtybees.com>
  * @copyright 2009-2017 PrestaLab.Ru
- * @copyright 2017 thirty bees
+ * @copyright 2017-2018 thirty bees
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  *
  * This module is based on the original `universalpay` module
@@ -107,6 +107,8 @@ class CustomPaymentMethod extends ObjectModel
      * @param array    $groups
      *
      * @return array|false|null|\PDOStatement|resource
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      * @internal param bool|int $idCarrier
      * @since    1.0.0
      */
@@ -123,23 +125,46 @@ class CustomPaymentMethod extends ObjectModel
         }
 
         $sql = new DbQuery();
-        $sql->select('cpm.*, cpml.`id_lang`, cpms.`id_shop`, cpmg.`id_group`, cpml.`name`, cpml.`description`, cpml.`description_success`, cpml.`description_short`');
+        $sql->select('cpm.*, cpml.`id_lang`, cpms.`id_shop`');
+        if (\Group::isFeatureActive()) {
+            $sql->select('cpmg.`id_group`');
+        }
+        $sql->select('cpml.`name`, cpml.`description`, cpml.`description_success`, cpml.`description_short`');
         if ($idCarrier) {
             $sql->select('cpmc.`id_carrier`');
         }
-        $sql->from(bqSQL(self::$definition['table']), 'cpm');
-        $sql->leftJoin(bqSQL(self::$definition['table']).'_lang', 'cpml', 'cpml.`'.bqSQL(self::$definition['primary']).'` = cpm.`'.bqSQL(self::$definition['primary']).'` AND cpml.`id_lang` = '.(int) $idLang);
-        $sql->leftJoin(bqSQL(self::$definition['table']).'_shop', 'cpms', 'cpms.`'.bqSQL(self::$definition['primary']).'` = cpm.`'.bqSQL(self::$definition['primary']).'` AND cpms.`id_shop` = '.(int) Context::getContext()->shop->id);
+        $sql->from(bqSQL(static::$definition['table']), 'cpm');
+        $sql->leftJoin(
+            bqSQL(static::$definition['table']).'_lang',
+            'cpml',
+            'cpml.`'.bqSQL(static::$definition['primary']).
+            '` = cpm.`'.bqSQL(static::$definition['primary']).'` AND cpml.`id_lang` = '.(int) $idLang
+        );
+        $sql->leftJoin(
+            bqSQL(static::$definition['table']).'_shop',
+            'cpms',
+            'cpms.`'.bqSQL(static::$definition['primary'])
+            .'` = cpm.`'.bqSQL(static::$definition['primary'])
+            .'` AND cpms.`id_shop` = '.(int) Context::getContext()->shop->id
+        );
         if ($idCarrier) {
-            $sql->innerJoin('custom_payment_method_carrier', 'cpmc', 'cpmc.`id_carrier` = '.(int) $idCarrier);
+            $sql->innerJoin(
+                'custom_payment_method_carrier',
+                'cpmc',
+                'cpmc.`id_carrier` = '.(int) $idCarrier
+            );
         }
         if (!empty($groups) && \Group::isFeatureActive()) {
-            $sql->innerJoin('custom_payment_method_group', 'cpmg', 'cpmg.`id_group` IN ('.implode($groups, ',').')');
+            $sql->innerJoin(
+                'custom_payment_method_group',
+                'cpmg',
+                'cpmg.`id_group` IN ('.implode($groups, ',').')'
+            );
         }
         if ($active) {
             $sql->where('`active` = 1');
         }
-        $sql->groupBy('cpm.`'.bqSQL(self::$definition['primary']).'`');
+        $sql->groupBy('cpm.`'.bqSQL(static::$definition['primary']).'`');
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
 
         return $result;
@@ -151,32 +176,34 @@ class CustomPaymentMethod extends ObjectModel
      * @return false|null|string
      *
      * @since 1.0.0
+     * @throws \PrestaShopException
      */
     public static function getIdByName($name)
     {
-        $sql = new DbQuery();
-        $sql->select(bqSQL(self::$definition['primary']));
-        $sql->from(bqSQL(self::$definition['table']).'_lang');
-        $sql->where('`name` = \''.pSQL($name).'\'');
-
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($sql);
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue(
+            (new DbQuery())
+                ->select(bqSQL(static::$definition['primary']))
+                ->from(bqSQL(static::$definition['table']).'_lang')
+                ->where('`name` = \''.pSQL($name).'\'')
+        );
     }
 
     /**
      * @return array
      *
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      * @since 1.0.0
      */
     public function getCarriers()
     {
         $carriers = [];
-
-        $sql = new DbQuery();
-        $sql->select('cpmc.`id_carrier`');
-        $sql->from('custom_payment_method_carrier', 'cpmc');
-        $sql->where('cpmc.`'.bqSQL(self::$definition['primary']).'` = '.(int) $this->id);
-
-        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
+            (new DbQuery())
+                ->select('cpmc.`id_carrier`')
+                ->from('custom_payment_method_carrier', 'cpmc')
+                ->where('cpmc.`'.bqSQL(static::$definition['primary']).'` = '.(int) $this->id)
+        );
         foreach ($result as $carrier) {
             $carriers[] = $carrier['id_carrier'];
         }
@@ -193,7 +220,11 @@ class CustomPaymentMethod extends ObjectModel
     {
         foreach ($carriers as $carrier) {
             $row = ['id_custom_payment_method' => (int) $this->id, 'id_carrier' => (int) $carrier];
-            Db::getInstance()->insert('custom_payment_method_carrier', $row);
+            try {
+                Db::getInstance()->insert('custom_payment_method_carrier', $row);
+            } catch (\PrestaShopException $e) {
+                \Logger::addLog("Custom payments module  - could not add carriers: {$e->getMessage()}");
+            }
         }
     }
 
@@ -204,6 +235,9 @@ class CustomPaymentMethod extends ObjectModel
      *
      * @param int $oldCarrierId
      * @param int $newCarrierId
+     *
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      */
     public static function updateCarrier($oldCarrierId, $newCarrierId)
     {
@@ -222,6 +256,8 @@ class CustomPaymentMethod extends ObjectModel
      * @param int|bool $idCarrier
      *
      * @return bool
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      */
     public function deleteCarrier($idCarrier = false)
     {
@@ -234,17 +270,19 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @return array
      *
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      * @since 1.0.0
      */
     public function getGroups()
     {
         $carriers = [];
-        $sql = new DbQuery();
-        $sql->select('cpmg.`id_group`');
-        $sql->from('custom_payment_method_group', 'cpmg');
-        $sql->where('cpmg.`id_custom_payment_method` = '.(int) $this->id);
-
-        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
+            (new DbQuery())
+                ->select('cpmg.`id_group`')
+                ->from('custom_payment_method_group', 'cpmg')
+                ->where('cpmg.`id_custom_payment_method` = '.(int) $this->id)
+        );
         foreach ($result as $carrier) {
             $carriers[] = $carrier['id_group'];
         }
@@ -255,6 +293,8 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @param array $groups
      *
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      * @since 1.0.0
      */
     public function addGroups($groups)
@@ -270,6 +310,8 @@ class CustomPaymentMethod extends ObjectModel
      *
      * @return bool
      *
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      * @since 1.0.0
      */
     public function deleteGroup($idGroup = false)
@@ -283,6 +325,8 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @return bool
      *
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      * @since 1.0.0
      */
     public function delete()
@@ -296,6 +340,8 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @param array $list
      *
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      * @since 1.0.0
      */
     public function updateCarriers($list)
@@ -309,6 +355,8 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @param array $list
      *
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      * @since 1.0.0
      */
     public function updateGroups($list)
@@ -325,6 +373,8 @@ class CustomPaymentMethod extends ObjectModel
      *
      * @return bool
      *
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      * @since 1.0.0
      */
     public function add($autodate = true, $nullValues = false)
@@ -344,6 +394,7 @@ class CustomPaymentMethod extends ObjectModel
      * @return void
      *
      * @since 1.0.0
+     * @throws \PrestaShopException
      */
     public static function createDatabase($className = null)
     {
@@ -401,6 +452,7 @@ class CustomPaymentMethod extends ObjectModel
      * @return void
      *
      * @since 1.0.0
+     * @throws \PrestaShopException
      */
     public static function dropDatabase($className = null)
     {
