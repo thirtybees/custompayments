@@ -238,14 +238,10 @@ class CustomPayments extends PaymentModule
             (int) Tools::getValue(CustomPaymentMethod::$definition['primary']),
             $this->context->cookie->id_lang
         );
-        $descriptionSuccess = str_replace(
-            ['%total%', '%order_number%', '%order_id%'],
-            [
-                Tools::displayPrice($order->total_paid),
-                Tools::safeOutput($order->reference),
-                (int) $order->id,
-            ],
-            $customPaymentMethod->description_success
+
+        $descriptionSuccess = static::updateDescriptionWithOrderData(
+            $customPaymentMethod->description_success,
+            $order
         );
 
         return '<div class="box">'.$descriptionSuccess.'</div>';
@@ -289,10 +285,29 @@ class CustomPayments extends PaymentModule
 
         $customPaymentMethod = new CustomPaymentMethod($idCustomPaymentMethod, $this->context->cookie->id_lang);
 
+        return static::updateDescriptionWithOrderData(
+            $customPaymentMethod->description_success,
+            $order
+        );
+    }
+
+    /**
+     * @param string $descriptionSuccess
+     *
+     * @param Order $order
+     *
+     * @return string
+     */
+    protected static function updateDescriptionWithOrderData($descriptionSuccess, $order)
+    {
         return str_replace(
             ['%total%', '%order_number%', '%order_id%'],
-            [Tools::displayPrice($order->total_paid), '#'. $order->reference, (int) $order->id],
-            $customPaymentMethod->description_success
+            [
+                Tools::displayPrice($order->total_paid),
+                Tools::safeOutput($order->reference),
+                (int)$order->id,
+            ],
+            $descriptionSuccess
         );
     }
 
