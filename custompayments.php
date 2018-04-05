@@ -290,8 +290,8 @@ class CustomPayments extends PaymentModule
         $customPaymentMethod = new CustomPaymentMethod($idCustomPaymentMethod, $this->context->cookie->id_lang);
 
         return str_replace(
-            ['%total%', '%order_number%'],
-            [Tools::DisplayPrice($params['order']->total_paid), '#'.$params['order']->reference],
+            ['%total%', '%order_number%', '%order_id%'],
+            [Tools::DisplayPrice($params['order']->total_paid), '#'.$params['order']->reference, (int) $params['order']->id],
             $customPaymentMethod->description_success
         );
     }
