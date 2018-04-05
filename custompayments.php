@@ -283,7 +283,7 @@ class CustomPayments extends PaymentModule
             return false;
         }
 
-        if (!($idCustomPaymentMethod = CustomPaymentMethod::getIdByName($params['order']->payment))) {
+        if (!($idCustomPaymentMethod = CustomPaymentMethod::getIdByName($order->payment))) {
             return false;
         }
 
@@ -291,7 +291,7 @@ class CustomPayments extends PaymentModule
 
         return str_replace(
             ['%total%', '%order_number%', '%order_id%'],
-            [Tools::DisplayPrice($params['order']->total_paid), '#'.$params['order']->reference, (int) $params['order']->id],
+            [Tools::DisplayPrice($order->total_paid), '#'. $order->reference, (int) $order->id],
             $customPaymentMethod->description_success
         );
     }
