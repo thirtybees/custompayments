@@ -241,7 +241,7 @@ class CustomPayments extends PaymentModule
         $descriptionSuccess = str_replace(
             ['%total%', '%order_number%', '%order_id%'],
             [
-                Tools::DisplayPrice($order->total_paid),
+                Tools::displayPrice($order->total_paid),
                 Tools::safeOutput($order->reference),
                 (int) $order->id,
             ],
@@ -291,7 +291,7 @@ class CustomPayments extends PaymentModule
 
         return str_replace(
             ['%total%', '%order_number%', '%order_id%'],
-            [Tools::DisplayPrice($order->total_paid), '#'. $order->reference, (int) $order->id],
+            [Tools::displayPrice($order->total_paid), '#'. $order->reference, (int) $order->id],
             $customPaymentMethod->description_success
         );
     }
@@ -432,7 +432,7 @@ class CustomPayments extends PaymentModule
         foreach ($paymentMethods as &$paymentMethod) {
             $paymentMethod['description'] = str_replace(
                 ['%total%'],
-                [Tools::DisplayPrice($cart->getOrderTotal(true, Cart::BOTH))],
+                [Tools::displayPrice($cart->getOrderTotal(true, Cart::BOTH))],
                 $paymentMethod['description']
             );
         }
