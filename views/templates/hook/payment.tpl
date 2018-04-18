@@ -66,7 +66,7 @@
             <p class="cart_navigation clearfix">
                 <input type="hidden" name="id_custom_payment_method" value="{$ps.id_custom_payment_method|intval}"/>
                 <button class="button btn btn-default button-medium" type="submit">
-                    <span>{l s='I confirm my order' mod='custompayments'}<i class="icon-chevron-right right"></i></span>
+                    <span>{l s='I confirm my order' mod='custompayments'}&nbsp;<i class="icon-chevron-right right"></i></span>
                 </button>
             </p>
             </form>

@@ -58,11 +58,11 @@
         <p class="cart_navigation clearfix" id="cart_navigation">
             <a class="button-exclusive btn btn-default"
                href="{$link->getPageLink('order', true, NULL, "step=3")|escape:'html':'UTF-8'}">
-                <i class="icon-chevron-left"></i>{l s='Other payment methods' mod='custompayments'}
+                <i class="icon-chevron-left"></i>&nbsp;{l s='Other payment methods' mod='custompayments'}
             </a>
             <input type="hidden" name="id_custom_payment_method" value="{$customPaymentMethod->id|intval}"/>
             <button class="button btn btn-default button-medium" type="submit">
-                <span>{l s='I confirm my order' mod='custompayments'}<i class="icon-chevron-right right"></i></span>
+                <span>{l s='I confirm my order' mod='custompayments'}&nbsp;<i class="icon-chevron-right right"></i></span>
             </button>
         </p>
     </form>
