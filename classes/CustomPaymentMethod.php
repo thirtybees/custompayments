@@ -120,7 +120,7 @@ class CustomPaymentMethod extends ObjectModel
      * @param int      $idLang
      * @param bool     $active
      * @param int|bool $idCarrier
-     * @param array    $groups
+     * @param int[]    $groups
      *
      * @return array|false|null|\PDOStatement|resource
      * @throws \PrestaShopDatabaseException
@@ -134,11 +134,7 @@ class CustomPaymentMethod extends ObjectModel
             die(Tools::displayError());
         }
 
-        if (!empty($groups)) {
-            foreach ($groups as &$group) {
-                $group = (int) $group;
-            }
-        }
+        $groups = array_map('intval', $groups);
 
         $sql = new DbQuery();
         $sql->select('cpm.*, cpml.`id_lang`, cpms.`id_shop`');
