@@ -75,6 +75,7 @@ class CustomPayments extends PaymentModule
      *
      * @since 1.0.0
      * @throws PrestaShopException
+     * @throws Adapter_Exception
      */
     public function install()
     {
@@ -117,6 +118,7 @@ class CustomPayments extends PaymentModule
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      * @since 1.0.0
+     * @throws Adapter_Exception
      */
     private function installModuleTab($tabClass, $tabName, $tabParent)
     {
@@ -155,6 +157,7 @@ class CustomPayments extends PaymentModule
      * @return bool Indicates whether this module has been successfully uninstalled
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
+     * @throws Adapter_Exception
      */
     public function uninstall()
     {
@@ -175,6 +178,7 @@ class CustomPayments extends PaymentModule
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      * @since 1.0.0
+     * @throws Adapter_Exception
      */
     private function uninstallModuleTab($tabClass)
     {
@@ -294,9 +298,10 @@ class CustomPayments extends PaymentModule
     /**
      * @param string $descriptionSuccess
      *
-     * @param Order $order
+     * @param Order  $order
      *
      * @return string
+     * @throws PrestaShopException
      */
     protected static function updateDescriptionWithOrderData($descriptionSuccess, $order)
     {
