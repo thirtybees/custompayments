@@ -469,6 +469,10 @@ class CustomPayments extends PaymentModule
     {
         $this->postProcess();
 
+        $this->context->smarty->assign([
+            'link' => $this->context->link,
+        ]);
+
         return $this->display(__FILE__, 'views/templates/admin/configure.tpl').$this->renderSettingsForm();
     }
 

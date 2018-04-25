@@ -29,7 +29,10 @@ namespace CustomPaymentsModule;
 use Context;
 use Db;
 use DbQuery;
+use Group;
 use ObjectModel;
+use PrestaShopDatabaseException;
+use PrestaShopException;
 use Tools;
 use Validate;
 
@@ -50,37 +53,50 @@ class CustomPaymentMethod extends ObjectModel
 
     // @codingStandardsIgnoreStart
     public static $definition = [
-        'table' => 'custom_payment_method',
-        'primary' => 'id_custom_payment_method',
+        'table'     => 'custom_payment_method',
+        'primary'   => 'id_custom_payment_method',
         'multilang' => true,
         'multishop' => true,
-        'fields' => [
-            'active'              => ['type' => self::TYPE_BOOL,                   'validate' => 'isBool',       'required' => true,                 'db_type' => 'TINYINT(1)',       'default' => '0'],
-            'date_add'            => ['type' => self::TYPE_DATE,                   'validate' => 'isDateFormat',                                     'db_type' => 'DATETIME'                          ],
-            'date_upd'            => ['type' => self::TYPE_DATE,                   'validate' => 'isDateFormat',                                     'db_type' => 'DATETIME'                          ],
-            'id_order_state'      => ['type' => self::TYPE_INT,                    'validate' => 'isUnsignedId', 'required' => true,                 'db_type' => 'INT(11) UNSIGNED', 'default' => '0'],
-            'id_cart_rule'        => ['type' => self::TYPE_INT,                    'validate' => 'isUnsignedId', 'required' => true,                 'db_type' => 'INT(11) UNSIGNED', 'default' => '0'],
+        'fields'    => [
+            'active'              => ['type' => self::TYPE_BOOL,                   'validate' => 'isBool',        'required' => true,                'db_type' => 'TINYINT(1)',       'default' => '0'],
+            'date_add'            => ['type' => self::TYPE_DATE,                   'validate' => 'isDateFormat',                                     'db_type' => 'DATETIME'],
+            'date_upd'            => ['type' => self::TYPE_DATE,                   'validate' => 'isDateFormat',                                     'db_type' => 'DATETIME'],
+            'id_order_state'      => ['type' => self::TYPE_INT,                    'validate' => 'isUnsignedId',  'required' => true,                'db_type' => 'INT(11) UNSIGNED', 'default' => '0'],
+            'id_cart_rule'        => ['type' => self::TYPE_INT,                    'validate' => 'isUnsignedId',  'required' => true,                'db_type' => 'INT(11) UNSIGNED', 'default' => '0'],
             'cart_type'           => ['type' => self::TYPE_INT,                    'validate' => 'isInt',                                            'db_type' => 'TINYINT(4)',       'default' => '0'],
-            'name'                => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isGenericName', 'required' => true, 'size' => 128, 'db_type' => 'VARCHAR(128)'                      ],
-            'description'         => ['type' => self::TYPE_HTML,   'lang' => true, 'validate' => 'isString',                                         'db_type' => 'TEXT'                              ],
-            'description_success' => ['type' => self::TYPE_HTML,   'lang' => true, 'validate' => 'isString',                                         'db_type' => 'TEXT'                              ],
-            'description_short'   => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isGenericName', 'required' => true, 'size' => 255, 'db_type' => 'VARCHAR(255)'                      ],
+            'name'                => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isGenericName', 'required' => true, 'size' => 128, 'db_type' => 'VARCHAR(128)'],
+            'description'         => ['type' => self::TYPE_HTML,   'lang' => true, 'validate' => 'isString',                                         'db_type' => 'TEXT'],
+            'description_success' => ['type' => self::TYPE_HTML,   'lang' => true, 'validate' => 'isString',                                         'db_type' => 'TEXT'],
+            'description_short'   => ['type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isGenericName', 'required' => true, 'size' => 255, 'db_type' => 'VARCHAR(255)'],
         ],
     ];
-    public $id;
+    /** @var int $active */
     public $active = 1;
+    /** @var int $id_order_state */
     public $id_order_state = 3;
+    /** @var int $id_cart_rule */
     public $id_cart_rule = 0;
+    /** @var int $cart_type */
     public $cart_type = 0;
+    /** @var int $position */
     public $position;
+    /** @var string $date_add */
     public $date_add;
+    /** @var string $date_upd */
     public $date_upd;
+    /** @var string $name */
     public $name;
+    /** @var string $description_short */
     public $description_short;
+    /** @var string $description */
     public $description;
+    /** @var string $description_success */
     public $description_success;
+    /** @var string $image_dir */
     public $image_dir;
+    /** @var array $carrier_box */
     public $carrier_box;
+    /** @var array $group_box */
     public $group_box;
     // @codingStandardsIgnoreEnd
 
@@ -126,7 +142,7 @@ class CustomPaymentMethod extends ObjectModel
 
         $sql = new DbQuery();
         $sql->select('cpm.*, cpml.`id_lang`, cpms.`id_shop`');
-        if (\Group::isFeatureActive()) {
+        if (Group::isFeatureActive()) {
             $sql->select('cpmg.`id_group`');
         }
         $sql->select('cpml.`name`, cpml.`description`, cpml.`description_success`, cpml.`description_short`');
@@ -154,7 +170,7 @@ class CustomPaymentMethod extends ObjectModel
                 'cpmc.`id_carrier` = '.(int) $idCarrier
             );
         }
-        if (!empty($groups) && \Group::isFeatureActive()) {
+        if (!empty($groups) && Group::isFeatureActive()) {
             $sql->innerJoin(
                 'custom_payment_method_group',
                 'cpmg',
@@ -176,7 +192,7 @@ class CustomPaymentMethod extends ObjectModel
      * @return false|null|string
      *
      * @since 1.0.0
-     * @throws \PrestaShopException
+     * @throws PrestaShopException
      */
     public static function getIdByName($name)
     {
@@ -191,40 +207,45 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @return array
      *
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function getCarriers()
     {
-        $carriers = [];
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
             (new DbQuery())
                 ->select('cpmc.`id_carrier`')
                 ->from('custom_payment_method_carrier', 'cpmc')
                 ->where('cpmc.`'.bqSQL(static::$definition['primary']).'` = '.(int) $this->id)
         );
-        foreach ($result as $carrier) {
-            $carriers[] = $carrier['id_carrier'];
+        if (is_array($result)) {
+            return array_column($result, 'id_carrier');
         }
 
-        return $carriers;
+        return [];
     }
 
     /**
      * Add Carrier
      *
      * @since 1.0.0
+     *
+     * @param array $carriers
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function addCarriers($carriers)
     {
         foreach ($carriers as $carrier) {
-            $row = ['id_custom_payment_method' => (int) $this->id, 'id_carrier' => (int) $carrier];
-            try {
-                Db::getInstance()->insert('custom_payment_method_carrier', $row);
-            } catch (\PrestaShopException $e) {
-                \Logger::addLog("Custom payments module  - could not add carriers: {$e->getMessage()}");
-            }
+            Db::getInstance()->insert(
+                'custom_payment_method_carrier',
+                [
+                    'id_custom_payment_method' => (int) $this->id,
+                    'id_carrier'               => (int) $carrier,
+                ]
+            );
         }
     }
 
@@ -236,15 +257,15 @@ class CustomPaymentMethod extends ObjectModel
      * @param int $oldCarrierId
      * @param int $newCarrierId
      *
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public static function updateCarrier($oldCarrierId, $newCarrierId)
     {
         Db::getInstance()->update(
             'custom_payment_method_carrier',
             ['id_carrier' => (int) $newCarrierId],
-            'id_carrier ='.(int) $oldCarrierId
+            'id_carrier = '.(int) $oldCarrierId
         );
     }
 
@@ -256,8 +277,9 @@ class CustomPaymentMethod extends ObjectModel
      * @param int|bool $idCarrier
      *
      * @return bool
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function deleteCarrier($idCarrier = false)
     {
@@ -270,24 +292,24 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @return array
      *
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     *
      * @since 1.0.0
      */
     public function getGroups()
     {
-        $carriers = [];
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
             (new DbQuery())
                 ->select('cpmg.`id_group`')
                 ->from('custom_payment_method_group', 'cpmg')
                 ->where('cpmg.`id_custom_payment_method` = '.(int) $this->id)
         );
-        foreach ($result as $carrier) {
-            $carriers[] = $carrier['id_group'];
+        if (is_array($result)) {
+            return array_map('intval', array_column($result, 'id_group'));
         }
 
-        return $carriers;
+        return [];
     }
 
     /**

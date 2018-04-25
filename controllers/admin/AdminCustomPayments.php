@@ -421,4 +421,21 @@ class AdminCustomPaymentsController extends ModuleAdminController
 
         return parent::uploadImage($id, $name, $dir, $ext, $width, $height);
     }
+
+    /**
+     * @since 1.3.0
+     */
+    public function initPageHeaderToolbar()
+    {
+        if (empty($this->display)) {
+            $this->page_header_toolbar_btn['add_payment'] = [
+                'href' => static::$currentIndex.'&addcustom_payment_method&token='.$this->token,
+                'desc' => $this->l('Add payment method', null, null, false),
+                'icon' => 'process-icon-plus',
+            ];
+        }
+
+        parent::initPageHeaderToolbar();
+    }
+
 }

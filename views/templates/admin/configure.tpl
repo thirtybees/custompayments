@@ -30,7 +30,7 @@
     </p>
     <strong>{l s='Quick start' mod='custompayments'}</strong>
     <ol>
-        <li>{l s='Visit the page `Modules and Services > Custom payment methods`' mod='custompayments'}</li>
+        <li>{l s='Visit the page' mod='custompayments'} <a href="{$link->getAdminLink('AdminCustomPayments')|escape:'html'}">{l s='Modules and Services > Custom payment methods' mod='custompayments'}</a></li>
         <li>{l s='Configure a payment method' mod='custompayments'}</li>
         <li>{l s='and click `Save` to show it on your front office' mod='custompayments'}</li>
         <li>

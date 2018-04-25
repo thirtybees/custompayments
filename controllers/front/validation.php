@@ -43,6 +43,9 @@ class CustompaymentsvalidationModuleFrontController extends ModuleFrontControlle
     // @codingStandardsIgnoreEnd
 
     /**
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     *
      * @since 1.0.0
      */
     public function postProcess()

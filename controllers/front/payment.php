@@ -50,6 +50,9 @@ class CustompaymentspaymentModuleFrontController extends ModuleFrontController
 
     /**
      * @see FrontController::initContent()
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function initContent()
     {
