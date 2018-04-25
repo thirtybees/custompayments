@@ -39,6 +39,8 @@ class AdminCustomPaymentsController extends ModuleAdminController
      * AdminCustomPaymentsController constructor.
      *
      * @since 1.0.0
+     *
+     * @throws PrestaShopException
      */
     public function __construct()
     {
@@ -55,7 +57,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
         $this->lang = true;
 
         // Retrieve the context from a static context, just because
-        $this->context = \Context::getContext();
+        $this->context = Context::getContext();
 
         // Only display this page in single store context
         $this->multishop_context = Shop::CONTEXT_SHOP;
@@ -105,6 +107,9 @@ class AdminCustomPaymentsController extends ModuleAdminController
     /**
      * @return string|null
      *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     * @throws SmartyException
      * @since 1.0.0
      */
     public function renderForm()
@@ -335,6 +340,9 @@ class AdminCustomPaymentsController extends ModuleAdminController
     /**
      * @return bool
      *
+     * @throws Adapter_Exception
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function postProcess()
@@ -342,7 +350,9 @@ class AdminCustomPaymentsController extends ModuleAdminController
         if (\Tools::isSubmit('deleteImage')) {
             return $this->processForceDeleteImage();
         } else {
-            $return = parent::postProcess();
+            parent::postProcess();
+            /** @var CustomPaymentMethod $return */
+            $return = $this->object;
 
             if (Tools::getValue('submitAdd'.$this->table) && Validate::isLoadedObject($return)) {
                 $carriers = Carrier::getCarriers($this->context->language->iso_code, false, false, false, null, Carrier::PS_CARRIERS_AND_CARRIER_MODULES_NEED_RANGE);
@@ -361,7 +371,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
                 }
             }
 
-            return $return;
+            return true;
         }
     }
 
@@ -372,7 +382,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
     {
         $customPaymentMethod = $this->loadObject(true);
 
-        if (\Validate::isLoadedObject($customPaymentMethod)) {
+        if (Validate::isLoadedObject($customPaymentMethod)) {
             $this->deleteImage($customPaymentMethod->id);
         }
     }
@@ -411,6 +421,8 @@ class AdminCustomPaymentsController extends ModuleAdminController
      *
      * @return bool
      *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since   1.0.0
      * @version 1.0.0 Initial version
      */
