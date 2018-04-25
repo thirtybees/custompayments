@@ -410,10 +410,10 @@ class CustomPayments extends PaymentModule
     public function checkCurrency(Cart $cart)
     {
         $orderCurrency = new Currency($cart->id_currency);
-        $moduleCurrrencies = $this->getCurrency((int) $cart->id_currency);
+        $moduleCurrencies = $this->getCurrency((int) $cart->id_currency);
 
-        if (is_array($moduleCurrrencies)) {
-            foreach ($moduleCurrrencies as $moduleCurrency) {
+        if (is_array($moduleCurrencies)) {
+            foreach ($moduleCurrencies as $moduleCurrency) {
                 if ($orderCurrency->id == $moduleCurrency['id_currency']) {
                     return true;
                 }
