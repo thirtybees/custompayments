@@ -137,7 +137,7 @@ class CustomPaymentMethod extends ObjectModel
         $groups = array_map('intval', $groups);
 
         $sql = new DbQuery();
-        $sql->select('cpm.*, cpml.`id_lang`, cpms.`id_shop`');
+        $sql->select('DISTINCT cpm.*, cpml.`id_lang`, cpms.`id_shop`');
         if (Group::isFeatureActive()) {
             $sql->select('cpmg.`id_group`');
         }
@@ -163,22 +163,20 @@ class CustomPaymentMethod extends ObjectModel
             $sql->innerJoin(
                 'custom_payment_method_carrier',
                 'cpmc',
-                'cpmc.`id_carrier` = '.(int) $idCarrier
+                'cpmc.`id_custom_payment_method` = cpm.`id_custom_payment_method` AND cpmc.`id_carrier` = '.(int) $idCarrier
             );
         }
         if (!empty($groups) && Group::isFeatureActive()) {
             $sql->innerJoin(
                 'custom_payment_method_group',
                 'cpmg',
-                'cpmg.`id_group` IN ('.implode($groups, ',').')'
+                'cpmc.`id_custom_payment_method` = cpm.`id_custom_payment_method` AND cpmg.`id_group` IN ('.implode($groups, ',').')'
             );
         }
         if ($active) {
             $sql->where('`active` = 1');
         }
-        $sql->groupBy('cpm.`'.bqSQL(static::$definition['primary']).'`');
         $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
-
         return $result;
     }
 
