@@ -51,7 +51,7 @@ class CustomPayments extends PaymentModule
     {
         $this->name = 'custompayments';
         $this->tab = 'payments_gateways';
-        $this->version = '1.2.3';
+        $this->version = '1.2.4';
         $this->author = 'thirty bees';
         $this->need_instance = 1;
 
