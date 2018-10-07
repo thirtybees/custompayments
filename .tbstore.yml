@@ -3,14 +3,15 @@ compatible_versions: 1.0.0+
 author: thirty bees
 category: payment
 tags:
-  - payment
-  - COD
-  - purchase order
-  - custom payment
-  - pick up in store
-  - pickup in store
+- payment
+- COD
+- purchase order
+- custom payment
+- pick up in store
+- pickup in store
+- custompayments
 description_short: The custom payments module allows you to add custom payment methods to your site.
 description: description.md
 images:
-  - image-1.png
+- image-1.png
 license: AFL

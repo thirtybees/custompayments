@@ -9,6 +9,7 @@ tags:
   - custom payment
   - pick up in store
   - pickup in store
+  - custompayments
 description_short: The custom payments module allows you to add custom payment methods to your site.
 description: description.md
 images:
