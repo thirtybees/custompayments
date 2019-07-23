@@ -1,3 +1,5 @@
-*custompayments*.zip
-
+/translations/*
+!/translations/index.php
+custompayments-*.zip
+config*.xml
 /vendor/
