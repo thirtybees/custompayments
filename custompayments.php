@@ -90,7 +90,6 @@ class CustomPayments extends PaymentModule
         $this->registerHook('actionCarrierUpdate');
         $this->registerHook('displayOrderDetail');
         $this->registerHook('displayPaymentReturn');
-        $this->registerHook('advancedPaymentOptions');
 
         mkdir(_PS_IMG_DIR_.'pay');
         static::installModuleTab(
