@@ -170,7 +170,7 @@ class CustomPaymentMethod extends ObjectModel
             $sql->innerJoin(
                 'custom_payment_method_group',
                 'cpmg',
-                'cpmg.`id_custom_payment_method` = cpm.`id_custom_payment_method` AND cpmg.`id_group` IN ('.implode($groups, ',').')'
+                'cpmg.`id_custom_payment_method` = cpm.`id_custom_payment_method` AND cpmg.`id_group` IN ('.implode(',', $groups).')'
             );
         }
         if ($active) {
