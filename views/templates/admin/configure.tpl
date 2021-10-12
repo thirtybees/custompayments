@@ -1,5 +1,5 @@
 {*
- * Copyright (C) 2017-2018 thirty bees
+ * Copyright (C) 2017-2021 thirty bees
  *
  * NOTICE OF LICENSE
  *
@@ -14,7 +14,7 @@
  * @author    0RS <admin@prestalab.ru>
  * @author    thirty bees <modules@thirtybees.com>
  * @copyright 2009-2017 PrestaLab.Ru
- * @copyright 2017-2018 thirty bees
+ * @copyright 2017-2021 thirty bees
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  *
  * This module is based on the original `universalpay` module
