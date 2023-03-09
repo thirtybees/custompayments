@@ -367,7 +367,7 @@ class CustomPaymentMethod extends ObjectModel
     public function updateCarriers($list)
     {
         $this->deleteCarrier();
-        if ($list && !empty($list)) {
+        if (!empty($list)) {
             $this->addCarriers($list);
         }
     }
@@ -382,7 +382,7 @@ class CustomPaymentMethod extends ObjectModel
     public function updateGroups($list)
     {
         $this->deleteGroup();
-        if ($list && !empty($list)) {
+        if (!empty($list)) {
             $this->addGroups($list);
         }
     }

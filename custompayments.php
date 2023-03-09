@@ -216,7 +216,6 @@ class CustomPayments extends PaymentModule
                 }
 
             }
-            reset($objects);
             rmdir($dir);
         }
 
@@ -383,7 +382,7 @@ class CustomPayments extends PaymentModule
         $virtual = $this->context->cart->isVirtualCart();
         $customPaymentMethods = $this->getCustomPaymentMethods($params);
         $paymentOptions = [];
-        foreach ($customPaymentMethods as $key => &$paymentMethod) {
+        foreach ($customPaymentMethods as $paymentMethod) {
             if (($paymentMethod['cart_type'] == CustomPaymentMethod::CART_REAL) && $virtual) {
                 continue;
             } elseif (($paymentMethod['cart_type'] == CustomPaymentMethod::CART_VIRTUAL) && !$virtual) {
@@ -572,7 +571,6 @@ class CustomPayments extends PaymentModule
         $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG')
             ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG')
             : 0;
-        $this->fields_form = [];
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitSave';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
