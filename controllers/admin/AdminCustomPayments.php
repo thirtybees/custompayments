@@ -340,7 +340,6 @@ class AdminCustomPaymentsController extends ModuleAdminController
     /**
      * @return bool
      *
-     * @throws Adapter_Exception
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      * @since 1.0.0
@@ -435,6 +434,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
     }
 
     /**
+     * @throws PrestaShopException
      * @since 1.3.0
      */
     public function initPageHeaderToolbar()

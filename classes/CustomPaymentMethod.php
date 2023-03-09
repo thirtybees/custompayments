@@ -52,6 +52,9 @@ class CustomPaymentMethod extends ObjectModel
     const CART_REAL = 2;
 
     // @codingStandardsIgnoreStart
+    /**
+     * @var array
+     */
     public static $definition = [
         'table'     => 'custom_payment_method',
         'primary'   => 'id_custom_payment_method',
@@ -103,9 +106,11 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * CustomPaymentMethod constructor.
      *
-     * @param null $id
-     * @param null $idLang
+     * @param int|null $id
+     * @param int|null $idLang
      *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function __construct($id = null, $idLang = null)
@@ -122,11 +127,10 @@ class CustomPaymentMethod extends ObjectModel
      * @param int|bool $idCarrier
      * @param int[]    $groups
      *
-     * @return array|false|null|\PDOStatement|resource
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
-     * @internal param bool|int $idCarrier
-     * @since    1.0.0
+     * @return array
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public static function getCustomPaymentMethods($idLang, $active = true, $idCarrier = false, $groups = [])
     {
@@ -309,8 +313,8 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @param array $groups
      *
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function addGroups($groups)
@@ -326,8 +330,8 @@ class CustomPaymentMethod extends ObjectModel
      *
      * @return bool
      *
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function deleteGroup($idGroup = false)
@@ -341,8 +345,8 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @return bool
      *
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function delete()
@@ -356,8 +360,8 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @param array $list
      *
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function updateCarriers($list)
@@ -371,8 +375,8 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * @param array $list
      *
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function updateGroups($list)
@@ -389,8 +393,8 @@ class CustomPaymentMethod extends ObjectModel
      *
      * @return bool
      *
-     * @throws \PrestaShopDatabaseException
-     * @throws \PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      * @since 1.0.0
      */
     public function add($autodate = true, $nullValues = false)
@@ -410,7 +414,7 @@ class CustomPaymentMethod extends ObjectModel
      * @return void
      *
      * @since 1.0.0
-     * @throws \PrestaShopException
+     * @throws PrestaShopException
      */
     public static function createDatabase($className = null)
     {
@@ -468,7 +472,7 @@ class CustomPaymentMethod extends ObjectModel
      * @return void
      *
      * @since 1.0.0
-     * @throws \PrestaShopException
+     * @throws PrestaShopException
      */
     public static function dropDatabase($className = null)
     {

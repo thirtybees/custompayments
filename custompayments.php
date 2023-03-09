@@ -39,6 +39,9 @@ class CustomPayments extends PaymentModule
     const IMAGE_WIDTH = 'CUSTOMPAYMENTS_IMAGE_WIDTH';
     const IMAGE_HEIGHT = 'CUSTOMPAYMENTS_IMAGE_HEIGHT';
 
+    /**
+     * @var bool
+     */
     protected $paymentMethods = false;
 
     /**
@@ -73,9 +76,9 @@ class CustomPayments extends PaymentModule
      *
      * @return bool Indicates whether this module has been installed successfully
      *
-     * @since 1.0.0
+     * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
-     * @throws Adapter_Exception
+     * @since 1.0.0
      */
     public function install()
     {
@@ -109,15 +112,14 @@ class CustomPayments extends PaymentModule
      * Install this module's tab
      *
      * @param string $tabClass
-     * @param array  $tabName
-     * @param int    $tabParent
+     * @param array $tabName
+     * @param int $tabParent
      *
      * @return bool
      *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      * @since 1.0.0
-     * @throws Adapter_Exception
      */
     private function installModuleTab($tabClass, $tabName, $tabParent)
     {
@@ -154,9 +156,9 @@ class CustomPayments extends PaymentModule
      * Uninstall this module
      *
      * @return bool Indicates whether this module has been successfully uninstalled
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
-     * @throws Adapter_Exception
      */
     public function uninstall()
     {
@@ -177,7 +179,6 @@ class CustomPayments extends PaymentModule
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      * @since 1.0.0
-     * @throws Adapter_Exception
      */
     private function uninstallModuleTab($tabClass)
     {
@@ -269,7 +270,7 @@ class CustomPayments extends PaymentModule
      *
      * @param array $params
      *
-     * @return bool|mixed
+     * @return false|string
      *
      * @since 1.0.0
      * @throws PrestaShopException
@@ -319,7 +320,7 @@ class CustomPayments extends PaymentModule
      * @param array $params
      *
      * @return string|null
-     * @throws Exception
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      * @throws SmartyException
@@ -362,7 +363,8 @@ class CustomPayments extends PaymentModule
      *
      * @param array $params Hook parameters
      *
-     * @return array|bool Smarty variables, nothing if should not be shown
+     * @return array|null Smarty variables, nothing if should not be shown
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -408,6 +410,7 @@ class CustomPayments extends PaymentModule
      * @param Cart $cart
      *
      * @return bool
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -430,7 +433,7 @@ class CustomPayments extends PaymentModule
     /**
      * @param array $params
      *
-     * @return array|bool|false|mysqli_result|null|PDOStatement|resource
+     * @return array
      *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
@@ -463,7 +466,6 @@ class CustomPayments extends PaymentModule
     /**
      * @return string
      *
-     * @throws Exception
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      * @throws SmartyException
@@ -507,7 +509,7 @@ class CustomPayments extends PaymentModule
 
     /**
      * @return string
-     * @throws Exception
+     *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      * @throws SmartyException

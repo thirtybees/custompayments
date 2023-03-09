@@ -45,7 +45,7 @@ class CustompaymentsvalidationModuleFrontController extends ModuleFrontControlle
     /**
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
-     *
+     * @throws SmartyException
      * @since 1.0.0
      */
     public function postProcess()

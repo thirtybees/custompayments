@@ -21,6 +21,13 @@ if (!defined('_TB_VERSION_')) {
     exit;
 }
 
+/**
+ * @param CustomPayments $module
+ *
+ * @return true
+ *
+ * @throws PrestaShopException
+ */
 function upgrade_module_1_1_0($module)
 {
     $module->registerHook('displayPaymentEU');
