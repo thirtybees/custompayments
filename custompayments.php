@@ -26,7 +26,7 @@
 
 use CustomPaymentsModule\CustomPaymentMethod;
 
-require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__.'/classes/CustomPaymentMethod.php';
 
 /**
  * Class CustomPayments
