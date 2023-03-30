@@ -35,7 +35,7 @@
         <li>{l s='and click `Save` to show it on your front office' mod='custompayments'}</li>
         <li>
             {l s='Full documentation of this module can be found on this page:' mod='custompayments'}
-            <a href="http://docs.thirtybees.com/merchants-guide/native-modules/custompayments/" target="_blank">http://docs.thirtybees.com/merchants-guide/native-modules/custompayments/</a>
+            <a href="https://docs.thirtybees.com/native-modules/custompayments/" target="_blank">https://docs.thirtybees.com/native-modules/custompayments/</a>
         </li>
     </ol>
     <em>{l s='This module is based on the original `universalpay` module which you can find on %s. Credits go to PrestaLab.Ru (http://www.prestalab.ru) for making the initial version' mod='custompayments' sprintf=['https://github.com/universalpay/universalpay']}</em>
