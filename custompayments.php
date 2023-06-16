@@ -501,7 +501,9 @@ class CustomPayments extends PaymentModule
                 Configuration::updateValue(static::IMAGE_HEIGHT, $height);
                 Configuration::updateValue(static::IMAGE_WIDTH, $width);
 
-                $this->context->controller->confirmations[] = $this->l('Settings successfully updated');
+                /** @var AdminController $controller */
+                $controller = $this->context->controller;
+                $controller->confirmations[] = $this->l('Settings successfully updated');
             }
         }
     }
@@ -563,6 +565,8 @@ class CustomPayments extends PaymentModule
             ],
         ];
 
+        /** @var AdminController $controller */
+        $controller = $this->context->controller;
         $helper = new HelperForm();
         $helper->show_toolbar = false;
         $helper->table = $this->table;
@@ -578,7 +582,7 @@ class CustomPayments extends PaymentModule
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
             'fields_value' => $this->getConfigFieldsValues(),
-            'languages'    => $this->context->controller->getLanguages(),
+            'languages'    => $controller->getLanguages(),
             'id_language'  => $this->context->language->id,
         ];
 

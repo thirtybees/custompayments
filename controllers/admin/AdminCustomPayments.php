@@ -342,6 +342,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
      *
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
+     *
      * @since 1.0.0
      */
     public function postProcess()
@@ -380,10 +381,10 @@ class AdminCustomPaymentsController extends ModuleAdminController
     public function processForceDeleteImage()
     {
         $customPaymentMethod = $this->loadObject(true);
-
         if (Validate::isLoadedObject($customPaymentMethod)) {
-            $this->deleteImage($customPaymentMethod->id);
+            return $this->deleteImage($customPaymentMethod->id);
         }
+        return false;
     }
 
     /**
@@ -395,11 +396,11 @@ class AdminCustomPaymentsController extends ModuleAdminController
      */
     public function deleteImage($idBeesBlogCategory)
     {
-        $deleted = false;
+        $deleted = true;
         // Delete base image
         foreach (['png', 'jpg'] as $extension) {
             if (file_exists(_PS_IMG_DIR_."pay/{$idBeesBlogCategory}.{$extension}")) {
-                unlink(_PS_IMG_DIR_."pay/{$idBeesBlogCategory}.{$extension}");
+                $deleted = unlink(_PS_IMG_DIR_."pay/{$idBeesBlogCategory}.{$extension}") && $deleted;
             }
         }
 
