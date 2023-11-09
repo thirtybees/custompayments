@@ -68,12 +68,7 @@ class CustompaymentspaymentModuleFrontController extends ModuleFrontController
             return;
         }
 
-        $total = $cart->getOrderTotal(true, Cart::BOTH);
-        $customPaymentMethod->description = str_replace(
-            ['%total%'],
-            [Tools::DisplayPrice($total)],
-            $customPaymentMethod->description
-        );
+        $customPaymentMethod->description = CustomPayments::updateDescriptionWithCart($customPaymentMethod->description, $cart);
 
         $this->context->smarty->assign(
             [

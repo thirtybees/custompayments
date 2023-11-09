@@ -242,10 +242,7 @@ class CustomPayments extends PaymentModule
             $this->context->cookie->id_lang
         );
 
-        $descriptionSuccess = static::updateDescriptionWithOrderData(
-            $customPaymentMethod->description_success,
-            $order
-        );
+        $descriptionSuccess = static::updateDescriptionWithOrderData($customPaymentMethod->description_success, $order);
 
         return '<div class="box">'.$descriptionSuccess.'</div>';
     }
@@ -288,10 +285,7 @@ class CustomPayments extends PaymentModule
 
         $customPaymentMethod = new CustomPaymentMethod($idCustomPaymentMethod, $this->context->cookie->id_lang);
 
-        return static::updateDescriptionWithOrderData(
-            $customPaymentMethod->description_success,
-            $order
-        );
+        return static::updateDescriptionWithOrderData($customPaymentMethod->description_success, $order);
     }
 
     /**
@@ -302,16 +296,54 @@ class CustomPayments extends PaymentModule
      * @return string
      * @throws PrestaShopException
      */
-    protected static function updateDescriptionWithOrderData($descriptionSuccess, $order)
+    public static function updateDescriptionWithOrderData($descriptionSuccess, Order $order)
+    {
+        return static::replacePlaceholders(
+            $descriptionSuccess,
+            (float)$order->total_paid,
+            (string)$order->reference,
+            (int)$order->id
+        );
+    }
+
+    /**
+     * @param $description
+     * @param Cart $cart
+     *
+     * @return string
+     * @throws PrestaShopException
+     */
+    public static function updateDescriptionWithCart($description, Cart $cart)
+    {
+        $total =  $cart->getOrderTotal(true, Cart::BOTH);
+        return static::replacePlaceholders($description, $total, '', 0);
+    }
+
+    /**
+     * @param string $description
+     * @param float $total
+     * @param string $reference
+     * @param int $orderId
+     *
+     * @return string
+     * @throws PrestaShopException
+     */
+    protected static function replacePlaceholders($description, $total, $reference, $orderId)
     {
         return str_replace(
-            ['%total%', '%order_number%', '%order_id%'],
             [
-                Tools::displayPrice($order->total_paid),
-                Tools::safeOutput($order->reference),
-                (int)$order->id,
+                '%total%',
+                '%order_number%',
+                '%order_id%',
+                '%total_amount%',
             ],
-            $descriptionSuccess
+            [
+                Tools::displayPrice($total),
+                Tools::safeOutput($reference),
+                $orderId,
+                $total,
+            ],
+            $description
         );
     }
 
@@ -451,11 +483,7 @@ class CustomPayments extends PaymentModule
         );
 
         foreach ($paymentMethods as &$paymentMethod) {
-            $paymentMethod['description'] = str_replace(
-                ['%total%'],
-                [Tools::displayPrice($cart->getOrderTotal(true, Cart::BOTH))],
-                $paymentMethod['description']
-            );
+            $paymentMethod['description'] = static::updateDescriptionWithCart($paymentMethod['description'], $cart);
         }
         $this->paymentMethods = $paymentMethods;
 

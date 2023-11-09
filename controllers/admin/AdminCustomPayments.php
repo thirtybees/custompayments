@@ -184,8 +184,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
                     'lang'     => true,
                     'rows'     => 5,
                     'cols'     => 40,
-                    'hint'     => $this->l('Invalid characters:').' <>;=#{}',
-                    'desc'     => $this->l('Displayed in payment selection page.'),
+                    'hint'     => $this->l('Displayed in payment selection page.'),
                 ],
                 [
                     'type'         => 'textarea',
@@ -195,8 +194,12 @@ class AdminCustomPaymentsController extends ModuleAdminController
                     'lang'         => true,
                     'rows'         => 5,
                     'cols'         => 40,
-                    'hint'         => $this->l('Invalid characters:').' <>;=#{}',
-                    'desc'         => $this->l('%total% will be replaced with total amount.').' '.$this->l('You can use additional input field with name prefixed up_'),
+                    'hint'     => $this->l('Displayed in payment selection page.'),
+                    'desc'         => implode("<br>&nbsp;&nbsp;-&nbsp;", [
+                        $this->l('Following placeholders can be used:'),
+                        Translate::ppTags($this->l('[1]%total%[/1] - will be replaced with formatted total amount, including currency symbol'), ['<code>']),
+                        Translate::ppTags($this->l('[1]%total_amount%[/1] - will be replaced with unformatted total amount'), ['<code>']),
+                    ]),
                 ],
                 [
                     'type'         => 'textarea',
@@ -206,8 +209,14 @@ class AdminCustomPaymentsController extends ModuleAdminController
                     'lang'         => true,
                     'rows'         => 5,
                     'cols'         => 40,
-                    'hint'         => $this->l('Invalid characters:').' <>;=#{}',
-                    'desc'         => $this->l('%order_number% will be replaced with order reference, %order_id% - order id, %total% - total amount, %up_field_name - value of input field'),
+                    'hint'         => $this->l('Displayed on order confirmation page'),
+                    'desc'         => implode("<br>&nbsp;&nbsp;-&nbsp;", [
+                        $this->l('Following placeholders can be used:'),
+                        Translate::ppTags($this->l('[1]%total%[/1] - will be replaced with formatted total amount, including currency symbol'), ['<code>']),
+                        Translate::ppTags($this->l('[1]%total_amount%[/1] - will be replaced with unformatted total amount'), ['<code>']),
+                        Translate::ppTags($this->l('[1]%order_number%[/1] - will be replaced with order reference'), ['<code>']),
+                        Translate::ppTags($this->l('[1]%order_id%[/1] - will be replaced with order id'), ['<code>']),
+                    ]),
                 ],
                 [
                     'type'          => 'file',
