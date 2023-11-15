@@ -141,7 +141,7 @@ class CustomPaymentMethod extends ObjectModel
         $groups = array_map('intval', $groups);
 
         $sql = new DbQuery();
-        $sql->select('DISTINCT cpm.*, cpml.`id_lang`, cpms.`id_shop`');
+        $sql->select('cpm.*, cpml.`id_lang`, cpms.`id_shop`');
         if (Group::isFeatureActive()) {
             $sql->select('cpmg.`id_group`');
         }
@@ -177,6 +177,7 @@ class CustomPaymentMethod extends ObjectModel
                 'cpmg.`id_custom_payment_method` = cpm.`id_custom_payment_method` AND cpmg.`id_group` IN ('.implode(',', $groups).')'
             );
         }
+        $sql->groupBy('cpm.`id_custom_payment_method`');
         if ($active) {
             $sql->where('`active` = 1');
         }
