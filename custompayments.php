@@ -57,6 +57,7 @@ class CustomPayments extends PaymentModule
         $this->version = '1.2.7';
         $this->author = 'thirty bees';
         $this->need_instance = false;
+        $this->tb_min_version = '1.6.0';
 
         $this->controllers = ['payment', 'validation'];
 
@@ -376,15 +377,13 @@ class CustomPayments extends PaymentModule
             } elseif (($paymentMethod['cart_type'] == CustomPaymentMethod::CART_VIRTUAL) && !$virtual) {
                 unset($customPaymentMethods[$key]);
             }
-            $paymentMethod['logo'] =
-                Media::getMediaPath(CustomPaymentMethod::getImagePath($paymentMethod['id_custom_payment_method']));
+            $imageFile = CustomPaymentMethod::getImagePath($paymentMethod['id_custom_payment_method']);
+            $paymentMethod['logo'] = $imageFile ? Media::getMediaPath($imageFile) : '';
         }
-        $this->smarty->assign(
-            [
-                'custompayments'         => $customPaymentMethods,
-                'custompayments_onepage' => Configuration::get(static::CONFIRMATION_BUTTON),
-            ]
-        );
+        $this->smarty->assign([
+            'custompayments' => $customPaymentMethods,
+            'custompayments_onepage' => Configuration::get(static::CONFIRMATION_BUTTON),
+        ]);
 
         return $this->display(__FILE__, 'payment.tpl');
     }

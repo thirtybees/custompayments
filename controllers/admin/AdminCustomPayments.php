@@ -30,6 +30,8 @@ if (!defined('_TB_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/../../custompayments.php';
+
 /**
  * Class AdminCustomPaymentsController
  */
@@ -69,7 +71,14 @@ class AdminCustomPaymentsController extends ModuleAdminController
         $this->addRowAction('edit');
         $this->addRowAction('delete');
 
-        $this->fieldImageSettings = ['name' => 'logo', 'dir' => 'pay'];
+        $this->fieldImageSettings = [
+            'logo' => [
+                'name' => 'logo',
+                'dir' => 'pay',
+                'width' => (int) Configuration::get(CustomPayments::IMAGE_WIDTH),
+                'height' => (int) Configuration::get(CustomPayments::IMAGE_HEIGHT),
+            ],
+        ];
 
         $this->fields_list = [
             'id_custom_payment_method' => ['title' => $this->l('ID'), 'align' => 'center', 'width' => 30],
@@ -123,8 +132,14 @@ class AdminCustomPaymentsController extends ModuleAdminController
 
         $id = (int) Tools::getValue(CustomPaymentMethod::$definition['primary']);
 
-        $imageUrl = ImageManager::thumbnail(CustomPaymentMethod::getImagePath($id), $this->table."_{$id}.jpg", 200, 'jpg', true, true);
-        $imageSize = file_exists(CustomPaymentMethod::getImagePath($id)) ? filesize(CustomPaymentMethod::getImagePath($id)) / 1000 : false;
+        $imageFile = CustomPaymentMethod::getImagePath($id);
+        if ($imageFile) {
+            $imageUrl = ImageManager::thumbnail($imageFile, $this->table . "_{$id}.jpg", 200, 'jpg', true, true);
+            $imageSize = filesize($imageFile) / 1000;
+        } else {
+            $imageUrl = '';
+            $imageSize = false;
+        }
 
         $this->fields_form = [
             'legend' => [
@@ -226,7 +241,7 @@ class AdminCustomPaymentsController extends ModuleAdminController
                     'desc'          => $this->l('Upload payment logo from your computer'),
                     'image'         => $imageUrl ? $imageUrl : false,
                     'size'          => $imageSize,
-                    'delete_url'    => static::$currentIndex.'&'.$this->identifier.'='.\Tools::getValue(CustomPaymentMethod::$definition['primary']).'&token='.$this->token.'&deleteImage=1',
+                    'delete_url'    => true,
                 ],
                 [
                     'type'    => 'select',
@@ -356,91 +371,28 @@ class AdminCustomPaymentsController extends ModuleAdminController
      */
     public function postProcess()
     {
-        if (\Tools::isSubmit('deleteImage')) {
-            return $this->processForceDeleteImage();
-        } else {
-            parent::postProcess();
-            /** @var CustomPaymentMethod $return */
-            $return = $this->object;
+        parent::postProcess();
+        /** @var CustomPaymentMethod $return */
+        $return = $this->object;
 
-            if (Tools::getValue('submitAdd'.$this->table) && Validate::isLoadedObject($return)) {
-                $carriers = Carrier::getCarriers($this->context->language->iso_code, false, false, false, null, Carrier::PS_CARRIERS_AND_CARRIER_MODULES_NEED_RANGE);
-                $carrierBox = [];
-                foreach ($carriers as $carrier) {
-                    if (Tools::getIsset('carrierBox_'.$carrier['id_carrier'])) {
-                        $carrierBox[] = $carrier['id_carrier'];
-                    }
-                }
-                $return->updateCarriers($carrierBox);
-                if (Group::isFeatureActive()) {
-                    $return->updateGroups(Tools::getValue('groupBox'));
-                }
-                if (Shop::isFeatureActive()) {
-                    $this->updateAssoShop($return->id);
+        if (Tools::getValue('submitAdd'.$this->table) && Validate::isLoadedObject($return)) {
+            $carriers = Carrier::getCarriers($this->context->language->iso_code, false, false, false, null, Carrier::PS_CARRIERS_AND_CARRIER_MODULES_NEED_RANGE);
+            $carrierBox = [];
+            foreach ($carriers as $carrier) {
+                if (Tools::getIsset('carrierBox_'.$carrier['id_carrier'])) {
+                    $carrierBox[] = $carrier['id_carrier'];
                 }
             }
-
-            return true;
-        }
-    }
-
-    /**
-     * @since 1.0.0
-     */
-    public function processForceDeleteImage()
-    {
-        $customPaymentMethod = $this->loadObject(true);
-        if (Validate::isLoadedObject($customPaymentMethod)) {
-            return $this->deleteImage($customPaymentMethod->id);
-        }
-        return false;
-    }
-
-    /**
-     * @param int $idBeesBlogCategory
-     *
-     * @return bool
-     *
-     * @since 1.0.0
-     */
-    public function deleteImage($idBeesBlogCategory)
-    {
-        $deleted = true;
-        // Delete base image
-        foreach (['png', 'jpg'] as $extension) {
-            if (file_exists(_PS_IMG_DIR_."pay/{$idBeesBlogCategory}.{$extension}")) {
-                $deleted = unlink(_PS_IMG_DIR_."pay/{$idBeesBlogCategory}.{$extension}") && $deleted;
+            $return->updateCarriers($carrierBox);
+            if (Group::isFeatureActive()) {
+                $return->updateGroups(Tools::getValue('groupBox'));
             }
-        }
-
-        if ($deleted) {
-            $this->confirmations[] = $this->l('Successfully deleted image');
+            if (Shop::isFeatureActive()) {
+                $this->updateAssoShop($return->id);
+            }
         }
 
         return true;
-    }
-
-    /**
-     * @param int         $id
-     * @param string      $name
-     * @param string      $dir
-     * @param string|bool $ext
-     * @param int|null    $width
-     * @param int|null    $height
-     *
-     * @return bool
-     *
-     * @throws PrestaShopDatabaseException
-     * @throws PrestaShopException
-     * @since   1.0.0
-     * @version 1.0.0 Initial version
-     */
-    protected function uploadImage($id, $name, $dir, $ext = false, $width = null, $height = null)
-    {
-        $width = (int) Configuration::get(CustomPayments::IMAGE_WIDTH);
-        $height = (int) Configuration::get(CustomPayments::IMAGE_HEIGHT);
-
-        return parent::uploadImage($id, $name, $dir, $ext, $width, $height);
     }
 
     /**

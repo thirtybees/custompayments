@@ -30,6 +30,7 @@ use Context;
 use Db;
 use DbQuery;
 use Group;
+use ImageManager;
 use ObjectModel;
 use PrestaShopDatabaseException;
 use PrestaShopException;
@@ -353,6 +354,7 @@ class CustomPaymentMethod extends ObjectModel
     public function delete()
     {
         return ($this->deleteCarrier()
+            && $this->deleteImage(true)
             && $this->deleteGroup()
             && parent::delete()
         );
@@ -487,29 +489,15 @@ class CustomPaymentMethod extends ObjectModel
     /**
      * Get local image path
      *
-     * @param int    $id
-     * @param string $type
+     * @param int $id
      *
-     * @return string
+     * @return string|false
      *
+     * @throws PrestaShopException
      * @since 1.0.0
      */
-    public static function getImagePath($id, $type = 'original')
+    public static function getImagePath($id)
     {
-        $baseLocation = _PS_IMG_DIR_.'pay/';
-
-        if ($type === 'original') {
-            if (file_exists("{$baseLocation}{$id}.png")) {
-                return "{$baseLocation}{$id}.png";
-            } else {
-                return "{$baseLocation}{$id}.jpg";
-            }
-        }
-
-        if (file_exists("{$baseLocation}{$id}-{$type}.png")) {
-            return "{$baseLocation}{$id}-{$type}.png";
-        } else {
-            return "{$baseLocation}{$id}-{$type}.jpg";
-        }
+        return ImageManager::getSourceImage( _PS_IMG_DIR_.'pay', (string)$id);
     }
 }
